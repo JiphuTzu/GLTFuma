@@ -1,8 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using UniGLTF;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -22,7 +19,7 @@ namespace UMa
         public Text text;
         public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
         public bool loadOnStart = false;
-		private ImporterContext _loader;
+        private ImporterContext _loader;
         private void Start()
         {
             if (loadOnStart && !string.IsNullOrEmpty(url))
@@ -30,20 +27,23 @@ namespace UMa
                 Load(url, p => text.text = $"{p * 100:f2}%", null);
             }
         }
-		public void Load(string url, Action<float> progress, Action<GameObject> complete){
-			this.url = url;
-			StartCoroutine(Load(progress,complete));
-		}
+        public void Load(string url, Action<float> progress, Action<GameObject> complete)
+        {
+            this.url = url;
+            StartCoroutine(Load(progress, complete));
+        }
         public IEnumerator Load(Action<float> progress, Action<GameObject> complete)
         {
-            _loader = new ImporterContext();
+            yield return null;
             var www = UnityWebRequest.Get(url);
             var ao = www.SendWebRequest();
             while (!www.isDone)
             {
                 progress?.Invoke(ao.progress * 0.1f);
+                yield return null;
             }
-            Debug.Log(www.downloadHandler.text);
+            _loader = new ImporterContext();
+            //Debug.Log(www.downloadHandler.text);
             _loader.ParseJson(www.downloadHandler.text);
             var storage = new WebStorage(url.Substring(0, url.LastIndexOf("/")));
             int total = _loader.GLTF.buffers.Count + _loader.GLTF.images.Count;
@@ -52,7 +52,7 @@ namespace UMa
             {
                 Debug.Log(buffer.uri);
                 yield return storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
-                Debug.Log(buffer.uri + " loaded");
+                //Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(storage);
                 current++;
             }
@@ -65,14 +65,16 @@ namespace UMa
             //loader.Parse(url,www.downloadHandler.data);
             _loader.ShowMeshes();
             _loader.Root.SetActive(false);
-			_loader.Root.transform.SetParent(transform);
+            _loader.Root.transform.SetParent(transform);
             _loader.Root.SetActive(true);
             complete?.Invoke(_loader.Root);
         }
-		public void Unload(){
-			if(_loader==null) return;
-			_loader.Dispose();
-			_loader = null;
-		}
+        public void Unload()
+        {
+            StopAllCoroutines();
+            if (_loader == null) return;
+            _loader.Dispose();
+            _loader = null;
+        }
     }
 }

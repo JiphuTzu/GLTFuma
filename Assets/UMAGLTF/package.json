@@ -1,6 +1,6 @@
 ﻿{
     "name": "com.uma.umagltf",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "displayName": "UMAGLTF",
     "description": "gltf importer and exporter.",
     "unity": "2019.3",
