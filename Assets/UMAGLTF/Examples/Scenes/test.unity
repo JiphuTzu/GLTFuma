@@ -236,7 +236,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 1082311159}
-  url: http://72studio.jcsureyes.com/202102111917111/girl.gltf
+  url: http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf
   loadOnStart: 1
 --- !u!4 &363779615
 Transform:

@@ -36,7 +36,7 @@ namespace UMa
 		}
         public IEnumerator Load(Action<float> progress, Action<GameObject> complete)
         {
-            var loader = new ImporterContext();
+            _loader = new ImporterContext();
             var www = UnityWebRequest.Get(url);
             var ao = www.SendWebRequest();
             while (!www.isDone)
@@ -44,30 +44,30 @@ namespace UMa
                 progress?.Invoke(ao.progress * 0.1f);
             }
             Debug.Log(www.downloadHandler.text);
-            loader.ParseJson(www.downloadHandler.text);
+            _loader.ParseJson(www.downloadHandler.text);
             var storage = new WebStorage(url.Substring(0, url.LastIndexOf("/")));
-            int total = loader.GLTF.buffers.Count + loader.GLTF.images.Count;
+            int total = _loader.GLTF.buffers.Count + _loader.GLTF.images.Count;
             int current = 0;
-            foreach (var buffer in loader.GLTF.buffers)
+            foreach (var buffer in _loader.GLTF.buffers)
             {
                 Debug.Log(buffer.uri);
-                yield return storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * current / total + p / total));
+                yield return storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
                 Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(storage);
                 current++;
             }
-            foreach (var image in loader.GLTF.images)
+            foreach (var image in _loader.GLTF.images)
             {
-                yield return storage.Load(image.uri, p => progress?.Invoke(0.1f + 0.8f * current / total + p / total));
+                yield return storage.Load(image.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
                 current++;
             }
-            yield return loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
+            yield return _loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
             //loader.Parse(url,www.downloadHandler.data);
-            loader.ShowMeshes();
-            loader.Root.SetActive(false);
-			loader.Root.transform.SetParent(transform);
-            loader.Root.SetActive(true);
-            complete?.Invoke(loader.Root);
+            _loader.ShowMeshes();
+            _loader.Root.SetActive(false);
+			_loader.Root.transform.SetParent(transform);
+            _loader.Root.SetActive(true);
+            complete?.Invoke(_loader.Root);
         }
 		public void Unload(){
 			if(_loader==null) return;
