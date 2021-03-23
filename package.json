@@ -1,0 +1,16 @@
+﻿{
+    "name": "com.uma.umagltf",
+    "version": "0.1.3",
+    "displayName": "UMAGLTF",
+    "description": "gltf importer and exporter.",
+    "unity": "2019.3",
+    "keywords": [
+      "gltf"
+    ],
+    "author": {
+      "name": "JiphuTzu",
+      "email": "jiphutzu@gmail.com",
+      "url": "https://jiphutzu.com"
+    },
+    "type": "library"
+  }
