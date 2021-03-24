@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UMa.GLTF;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -24,7 +25,7 @@ namespace UMa
 			Debug.Log("web storage root = "+_root);
 			_data = new Dictionary<string, byte[]>();
 		}
-		public IEnumerator Load(string url,Action<float> progress){
+		public async Task Load(string url,Action<float> progress){
 			var path = GetPath(url);
 			Debug.Log("load path = "+path);
 			var www = UnityWebRequest.Get(path);
@@ -32,7 +33,7 @@ namespace UMa
             while (!www.isDone)
 			{
 				progress.Invoke(ao.progress);
-				yield return null;
+				await Task.Yield();
 			}
 			_data.Add(url,www.downloadHandler.data);
 			// var s = "storage add \n";
@@ -41,16 +42,16 @@ namespace UMa
 			// 	s+= item.Key+" = "+item.Value.Length+"\n";
 			// }
 			// Debug.Log(s);
-
 		}
+        public void Load(string url,Action<string> complete){
+            complete.Invoke(url);
+        }
         public ArraySegment<byte> Get(string url)
         {
-            var bytes =
-                (url.StartsWith("data:"))
-                ? url.ReadEmbeded()
-                : _data[url]
-                ;
-			Debug.Log("get storage ... "+url + " ======= "+bytes.Length);
+            var bytes = new byte[0];
+            if(url.StartsWith("data:")) bytes = url.ReadEmbeded();
+            if(_data.ContainsKey(url)) bytes = _data[url];
+			//Debug.Log("get storage ... "+url + " ======= "+bytes.Length);
             return new ArraySegment<byte>(bytes);
         }
 

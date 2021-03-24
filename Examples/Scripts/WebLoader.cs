@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Text;
+using System.Threading.Tasks;
 using UMa.GLTF;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,13 +33,14 @@ namespace UMa
         public void Load(string url,WebStorage storage, Action<float> progress, Action<GameObject> complete)
         {
             this.url = url;
-            StartCoroutine(Load(storage,progress, complete));
+            var res = Load(storage,progress, complete);
         }
-        public IEnumerator Load(WebStorage storage,Action<float> progress, Action<GameObject> complete)
+        public async Task Load(WebStorage storage,Action<float> progress, Action<GameObject> complete)
         {
             var name = url.Substring(url.LastIndexOf("/")+1);
             //加载.gltf文件
-            yield return storage.Load(name,p=>progress?.Invoke(p*0.1f));
+            await storage.Load(name,p=>progress?.Invoke(p*0.1f));
+
             _loader = new GLTFImporter();
             //Debug.Log(www.downloadHandler.text);
             //用JsonUtility解析到gltf数据
@@ -49,7 +51,7 @@ namespace UMa
             foreach (var buffer in _loader.gltf.buffers)
             {
                 Debug.Log(buffer.uri);
-                yield return storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
+                await storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
                 //Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(storage);
                 current++;
@@ -62,7 +64,7 @@ namespace UMa
             //     current++;
             // }
             //解析mesh、material、animation等数据
-            yield return _loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
+            await _loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
             //loader.Parse(url,www.downloadHandler.data);
             _loader.ShowMeshes();
             _loader.root.SetActive(false);

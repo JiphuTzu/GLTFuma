@@ -376,6 +376,9 @@ namespace UMa.GLTF.Zip
 
             throw new NotImplementedException(found.CompressionMethod.ToString());
         }
+        public void Load(string url,Action<string> complete){
+            complete.Invoke(url);
+        }
 
         public string GetPath(string url)
         {
