@@ -8,9 +8,9 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
-    public class gltfExporter : IDisposable
+    public class GLTFExporter : IDisposable
     {
 
 #if UNITY_EDITOR
@@ -34,8 +34,8 @@ namespace UniGLTF
                 return;
             }
 
-            var gltf = new glTF();
-            using (var exporter = new gltfExporter(gltf))
+            var gltf = new GLTFRoot();
+            using (var exporter = new GLTFExporter(gltf))
             {
                 exporter.Prepare(go);
                 exporter.Export();
@@ -51,7 +51,7 @@ namespace UniGLTF
         }
 #endif
 
-        glTF glTF;
+        GLTFRoot glTF;
 
         public bool UseSparseAccessorForBlendShape
         {
@@ -97,27 +97,27 @@ namespace UniGLTF
         {
             get
             {
-                yield return glTF_KHR_materials_unlit.ExtensionName;
+                yield return KHRMaterialUnlit.ExtensionName;
             }
         }
 
-        public gltfExporter(glTF gltf)
+        public GLTFExporter(GLTFRoot gltf)
         {
             glTF = gltf;
 
             glTF.extensionsUsed.AddRange(ExtensionUsed);
 
-            glTF.asset = new glTFAssets
+            glTF.asset = new GLTFAsset
             {
                 generator = "UMAGLTF",
                 version = "2.0",
             };
         }
 
-        public static glTF Export(GameObject go)
+        public static GLTFRoot Export(GameObject go)
         {
-            var gltf = new glTF();
-            using (var exporter = new gltfExporter(gltf))
+            var gltf = new GLTFRoot();
+            using (var exporter = new GLTFExporter(gltf))
             {
                 exporter.Prepare(go);
                 exporter.Export();
@@ -150,9 +150,9 @@ namespace UniGLTF
         }
 
         #region Export
-        static glTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
+        static GLTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
         {
-            var node = new glTFNode
+            var node = new GLTFNode
             {
                 name = x.name,
                 children = x.transform.GetChildren().Select(y => nodes.IndexOf(y)).ToArray(),
@@ -180,7 +180,7 @@ namespace UniGLTF
             return node;
         }
 
-        void FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
+        void FromGameObject(GLTFRoot gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -251,9 +251,9 @@ namespace UniGLTF
                         && x.bones.Length > 0)
                     .ToList();
                 gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
-                gltf.scenes = new List<gltfScene>
+                gltf.scenes = new List<GLTFScene>
                 {
-                    new gltfScene
+                    new GLTFScene
                     {
                         nodes = go.transform.GetChildren().Select(x => Nodes.IndexOf(x)).ToArray(),
                     }
@@ -262,9 +262,9 @@ namespace UniGLTF
                 foreach (var x in unitySkins)
                 {
                     var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
-                    var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, glBufferTarget.NONE);
+                    var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, GLTFBufferTarget.NONE);
 
-                    var skin = new glTFSkin
+                    var skin = new GLTFSkin
                     {
                         inverseBindMatrices = accessor,
                         joints = x.bones.Select(y => Nodes.IndexOf(y)).ToArray(),
@@ -273,7 +273,7 @@ namespace UniGLTF
                     var skinIndex = gltf.skins.Count;
                     gltf.skins.Add(skin);
 
-                    foreach (var z in Nodes.Where(y => y.Has(x)))
+                    foreach (var z in Nodes.Where(y => y.HasComponent(x)))
                     {
                         var nodeIndex = Nodes.IndexOf(z);
                         var node = gltf.nodes[nodeIndex];
@@ -303,20 +303,20 @@ namespace UniGLTF
                     {
                         var animationWithCurve = AnimationExporter.Export(clip, go.transform, Nodes);
 
-                        foreach (var kv in animationWithCurve.SamplerMap)
+                        foreach (var kv in animationWithCurve.samplers)
                         {
-                            var sampler = animationWithCurve.Animation.samplers[kv.Key];
+                            var sampler = animationWithCurve.animation.samplers[kv.Key];
 
-                            var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Input);
+                            var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.input);
                             sampler.input = inputAccessorIndex;
 
-                            var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Output);
+                            var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.output);
                             sampler.output = outputAccessorIndex;
 
                             // modify accessors
                             var outputAccessor = gltf.accessors[outputAccessorIndex];
-                            var channel = animationWithCurve.Animation.channels.First(x => x.sampler == kv.Key);
-                            switch (glTFAnimationTarget.GetElementCount(channel.target.path))
+                            var channel = animationWithCurve.animation.channels.First(x => x.sampler == kv.Key);
+                            switch (GLTFAnimationTarget.GetElementCount(channel.target.path))
                             {
                                 case 1:
                                     outputAccessor.type = "SCALAR";
@@ -336,8 +336,8 @@ namespace UniGLTF
                                     throw new NotImplementedException();
                             }
                         }
-                        animationWithCurve.Animation.name = clip.name;
-                        gltf.animations.Add(animationWithCurve.Animation);
+                        animationWithCurve.animation.name = clip.name;
+                        gltf.animations.Add(animationWithCurve.animation);
                     }
                 }
                 #endregion

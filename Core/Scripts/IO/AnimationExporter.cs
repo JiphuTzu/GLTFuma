@@ -7,21 +7,21 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
 
     public static class AnimationExporter
     {
         public class InputOutputValues
         {
-            public float[] Input;
-            public float[] Output;
+            public float[] input;
+            public float[] output;
         }
 
         public class AnimationWithSampleCurves
         {
-            public glTFAnimation Animation;
-            public Dictionary<int, InputOutputValues> SamplerMap = new Dictionary<int, InputOutputValues>();
+            public GLTFAnimation animation;
+            public Dictionary<int, InputOutputValues> samplers = new Dictionary<int, InputOutputValues>();
         }
 
 #if UNITY_EDITOR
@@ -63,31 +63,31 @@ namespace UniGLTF
             return nodes.IndexOf(descendant);
         }
 
-        public static glTFAnimationTarget.AnimationPropertys PropertyToTarget(string property)
+        public static GLTFAnimationTarget.AnimationProperty PropertyToTarget(string property)
         {
             if (property.StartsWith("m_LocalPosition."))
             {
-                return glTFAnimationTarget.AnimationPropertys.Translation;
+                return GLTFAnimationTarget.AnimationProperty.Translation;
             }
             else if (property.StartsWith("localEulerAnglesRaw."))
             {
-                return glTFAnimationTarget.AnimationPropertys.EulerRotation;
+                return GLTFAnimationTarget.AnimationProperty.EulerRotation;
             }
             else if (property.StartsWith("m_LocalRotation."))
             {
-                return glTFAnimationTarget.AnimationPropertys.Rotation;
+                return GLTFAnimationTarget.AnimationProperty.Rotation;
             }
             else if (property.StartsWith("m_LocalScale."))
             {
-                return glTFAnimationTarget.AnimationPropertys.Scale;
+                return GLTFAnimationTarget.AnimationProperty.Scale;
             }
             else if (property.StartsWith("blendShape."))
             {
-                return glTFAnimationTarget.AnimationPropertys.BlendShape;
+                return GLTFAnimationTarget.AnimationProperty.BlendShape;
             }
             else
             {
-                return glTFAnimationTarget.AnimationPropertys.NotImplemented;
+                return GLTFAnimationTarget.AnimationProperty.NotImplemented;
             }
         }
 
@@ -119,7 +119,7 @@ namespace UniGLTF
         {
             var animation = new AnimationWithSampleCurves
             {
-                Animation = new glTFAnimation(),
+                animation = new GLTFAnimation(),
             };
 
 #if UNITY_5_6_OR_NEWER
@@ -130,32 +130,32 @@ namespace UniGLTF
                 var curve = AnimationUtility.GetEditorCurve(clip, binding);
 
                 var property = AnimationExporter.PropertyToTarget(binding.propertyName);
-                if (property == glTFAnimationTarget.AnimationPropertys.NotImplemented)
+                if (property == GLTFAnimationTarget.AnimationProperty.NotImplemented)
                 {
                     Debug.LogWarning("Not Implemented keyframe property : " + binding.propertyName);
                     continue;
                 }
-                if (property == glTFAnimationTarget.AnimationPropertys.EulerRotation)
+                if (property == GLTFAnimationTarget.AnimationProperty.EulerRotation)
                 {
                     Debug.LogWarning("Interpolation setting of AnimationClip should be Quaternion");
                     continue;
                 }
 
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
-                var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, property);
+                var samplerIndex = animation.animation.AddChannelAndGetSampler(nodeIndex, property);
                 var elementCount = 0;
-                if (property == glTFAnimationTarget.AnimationPropertys.BlendShape)
+                if (property == GLTFAnimationTarget.AnimationProperty.BlendShape)
                 {
                     var mesh = nodes[nodeIndex].GetComponent<SkinnedMeshRenderer>().sharedMesh;
                     elementCount = mesh.blendShapeCount;
                 }
                 else
                 {
-                    elementCount = glTFAnimationTarget.GetElementCount(property);
+                    elementCount = GLTFAnimationTarget.GetElementCount(property);
                 }
 
                 // 同一のsamplerIndexが割り当てられているcurveDataがある場合はそれを使用し、無ければ作る
-                    var curveData = curveDatas.FirstOrDefault(x => x.SamplerIndex == samplerIndex);
+                    var curveData = curveDatas.FirstOrDefault(x => x.samplerIndex == samplerIndex);
                 if (curveData == null)
                 {
                     curveData = new AnimationCurveData(AnimationUtility.GetKeyRightTangentMode(curve, 0), property, samplerIndex, elementCount);
@@ -165,7 +165,7 @@ namespace UniGLTF
                 // 全てのキーフレームを回収
                 int elementOffset = 0;
                 float valueFactor = 1.0f;
-                if (property == glTFAnimationTarget.AnimationPropertys.BlendShape)
+                if (property == GLTFAnimationTarget.AnimationProperty.BlendShape)
                 {
                     var mesh = nodes[nodeIndex].GetComponent<SkinnedMeshRenderer>().sharedMesh;
                     var blendShapeName = binding.propertyName.Replace("blendShape.", "");
@@ -196,20 +196,20 @@ namespace UniGLTF
 
                 var elementNum = curve.Keyframes.First().Values.Length;
                 var values = default(InputOutputValues);
-                if (!animation.SamplerMap.TryGetValue(curve.SamplerIndex, out values))
+                if (!animation.samplers.TryGetValue(curve.samplerIndex, out values))
                 {
                     values = new InputOutputValues();
-                    values.Input = new float[curve.Keyframes.Count];
-                    values.Output = new float[curve.Keyframes.Count * elementNum];
-                    animation.SamplerMap[curve.SamplerIndex] = values;
-                    animation.Animation.samplers[curve.SamplerIndex].interpolation = curve.GetInterpolation();
+                    values.input = new float[curve.Keyframes.Count];
+                    values.output = new float[curve.Keyframes.Count * elementNum];
+                    animation.samplers[curve.samplerIndex] = values;
+                    animation.animation.samplers[curve.samplerIndex].interpolation = curve.GetInterpolation();
                 }
 
                 int keyframeIndex = 0;
                 foreach (var keyframe in curve.Keyframes)
                 {
-                    values.Input[keyframeIndex] = keyframe.Time;
-                    Buffer.BlockCopy(keyframe.GetRightHandCoordinate(), 0, values.Output, keyframeIndex * elementNum * sizeof(float), elementNum * sizeof(float));
+                    values.input[keyframeIndex] = keyframe.time;
+                    Buffer.BlockCopy(keyframe.GetRightHandCoordinate(), 0, values.output, keyframeIndex * elementNum * sizeof(float), elementNum * sizeof(float));
                     keyframeIndex++;
                 }
             }

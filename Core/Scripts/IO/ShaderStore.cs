@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public interface IShaderStore
     {
-        Shader GetShader(glTFMaterial material);
+        Shader GetShader(GLTFMaterial material);
     }
 
     public class ShaderStore : IShaderStore
@@ -85,7 +85,7 @@ namespace UniGLTF
         }
 
         //ImporterContext m_context;
-        public ShaderStore(ImporterContext _)
+        public ShaderStore(GLTFImporter _)
         {
             //m_context = context;
         }
@@ -104,7 +104,7 @@ namespace UniGLTF
             return true;
         }
 
-        public Shader GetShader(glTFMaterial material)
+        public Shader GetShader(GLTFMaterial material)
         {
             if (material == null)
             {

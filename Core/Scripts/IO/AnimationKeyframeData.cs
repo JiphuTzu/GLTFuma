@@ -1,11 +1,13 @@
-namespace UniGLTF
+using System;
+
+namespace UMa.GLTF
 {
     class AnimationKeyframeData
     {
 #if UNITY_EDITOR
-        public float Time { get; set; }
-        public delegate float[] ConverterFunc(float[] values);
-        private ConverterFunc _converter;
+        public float time { get; set; }
+        //public delegate float[] ConverterFunc(float[] values);
+        private Func<float[],float[]> _converter;
         private float[] _values;
         public float[] Values
         {
@@ -18,7 +20,7 @@ namespace UniGLTF
             get { return _enterValues; }
         }
 
-        public AnimationKeyframeData(int elementCount, ConverterFunc converter)
+        public AnimationKeyframeData(int elementCount, Func<float[],float[]> converter)
         {
             _values = new float[elementCount];
             _enterValues = new bool[elementCount];

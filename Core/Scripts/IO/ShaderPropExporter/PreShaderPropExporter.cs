@@ -9,7 +9,7 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF.ShaderPropExporter
+namespace UMa.GLTF.ShaderPropExporter
 {
     public class PreExportShadersAttribute : Attribute { }
     public class PreExportShaderAttribute : Attribute { }

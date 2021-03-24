@@ -5,7 +5,7 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public interface ITextureConverter
     {
@@ -17,7 +17,7 @@ namespace UniGLTF
     {
         public delegate Color32 ColorConversion(Color32 color);
 
-        public static Texture2D Convert(Texture2D texture, glTFTextureTypes textureType, ColorConversion colorConversion, Material convertMaterial)
+        public static Texture2D Convert(Texture2D texture, GLTFTextureType textureType, ColorConversion colorConversion, Material convertMaterial)
         {
             var copyTexture = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), convertMaterial);
             if (colorConversion != null)
@@ -52,14 +52,14 @@ namespace UniGLTF
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Import, null);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Metallic, Import, null);
             TextureConverter.AppendTextureExtension(converted, m_extension);
             return converted;
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
         {
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Export, null);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Metallic, Export, null);
             TextureConverter.RemoveTextureExtension(converted, m_extension);
             return converted;
         }
@@ -117,7 +117,7 @@ namespace UniGLTF
             return texture;
 #endif
             var mat = GetEncoder();
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Normal, null, mat);
             TextureConverter.AppendTextureExtension(converted, m_extension);
             return converted;
         }
@@ -128,7 +128,7 @@ namespace UniGLTF
             return texture;
 #endif
             var mat = GetDecoder();
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Normal, null, mat);
             TextureConverter.RemoveTextureExtension(converted, m_extension);
             return converted;
         }
@@ -140,14 +140,14 @@ namespace UniGLTF
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Import, null);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Occlusion, Import, null);
             TextureConverter.AppendTextureExtension(converted, m_extension);
             return converted;
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
         {
-            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Export, null);
+            var converted = TextureConverter.Convert(texture, GLTFTextureType.Occlusion, Export, null);
             TextureConverter.RemoveTextureExtension(converted, m_extension);
             return converted;
         }

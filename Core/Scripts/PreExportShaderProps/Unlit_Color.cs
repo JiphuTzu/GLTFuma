@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 
-namespace UniGLTF.ShaderPropExporter
+namespace UMa.GLTF.ShaderPropExporter
 {
     public static partial class PreShaderPropExporter
     {

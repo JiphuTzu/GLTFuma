@@ -7,7 +7,7 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public static class StaticMeshIntegrator
     {

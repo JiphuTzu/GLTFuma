@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public static class ImporterMenu
     {
@@ -21,10 +21,10 @@ namespace UniGLTF
                 //
                 // load into scene
                 //
-                var context = new ImporterContext();
+                var context = new GLTFImporter();
                 //context.Load(path);
                 context.ShowMeshes();
-                Selection.activeGameObject = context.Root;
+                Selection.activeGameObject = context.root;
             }
             else
             {

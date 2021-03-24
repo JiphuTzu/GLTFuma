@@ -3,15 +3,17 @@ using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public interface ITextureLoader : IDisposable
     {
+        void Load(Action complete);
         Texture2D Texture { get; }
 
         /// <summary>
@@ -19,7 +21,7 @@ namespace UniGLTF
         /// </summary>
         /// <param name="gltf"></param>
         /// <param name="storage"></param>
-        void ProcessOnAnyThread(glTF gltf, IStorage storage);
+        void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage);
 
         /// <summary>
         /// Call from unity main thread
@@ -48,8 +50,11 @@ namespace UniGLTF
         public void Dispose()
         {
         }
+        public void Load(Action complete){
+            complete.Invoke();
+        }
 
-        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
+        public void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage)
         {
         }
 
@@ -96,6 +101,9 @@ namespace UniGLTF
         public void Dispose()
         {
         }
+        public void Load(Action complete){
+            complete.Invoke();
+        }
 
         static Byte[] ToArray(ArraySegment<byte> bytes)
         {
@@ -117,10 +125,10 @@ namespace UniGLTF
 
         Byte[] m_imageBytes;
         string m_textureName;
-        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
+        public void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage)
         {
             var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
-            var segments = gltf.GetImageBytes(storage, imageIndex, out m_textureName);
+            var segments = gltf.GetImageBytes(storage, imageIndex, out m_textureName, out var url);
             m_imageBytes = ToArray(segments);
         }
 
@@ -166,10 +174,11 @@ namespace UniGLTF
 
         ArraySegment<Byte> m_segments;
         string m_textureName;
-        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
+        private string url;
+        public void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage)
         {
             var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
-            m_segments = gltf.GetImageBytes(storage, imageIndex, out m_textureName);
+            m_segments = gltf.GetImageBytes(storage, imageIndex, out m_textureName, out url);
         }
 
 #if false
@@ -260,37 +269,45 @@ namespace UniGLTF
 
         public IEnumerator ProcessOnMainThread(bool isLinear)
         {
-            // tmp file
-            var tmp = Path.GetTempFileName();
-            using (var f = new FileStream(tmp, FileMode.Create))
+            var tex = new Texture2D(2, 2);
+            if (string.IsNullOrEmpty(url))
             {
-                f.Write(m_segments.Array, m_segments.Offset, m_segments.Count);
+                tex.LoadImage(m_segments.ToArray());
+                tex.Apply();
+                Texture = tex;
+                Texture.name = m_textureName;
+            }
+            yield return null;
+        }
+        public void Load(Action complete)
+        {
+            if (string.IsNullOrEmpty(url)) return;
+            Debug.LogFormat("UnityWebRequest: {0}", url);
+            StartLoad(complete);
+        }
+        private async Task<bool> StartLoad(Action complete)
+        {
+            var m_uwr = UnityWebRequestTexture.GetTexture(url);
+            Debug.Log("load texture ... "+url);
+            var ao = m_uwr.SendWebRequest();
+            // wait for request
+            while (!m_uwr.isDone)
+            {
+                await Task.Yield();
             }
 
-            using (var d = new Deleter(tmp))
+            if (string.IsNullOrEmpty(m_uwr.error))
             {
-                var url = "file:///" + tmp.Replace("\\", "/");
-                Debug.LogFormat("UnityWebRequest: {0}", url);
-                using (var m_uwr = new WWW(url))
-                {
-                    yield return m_uwr;
-
-                    // wait for request
-                    while (!m_uwr.isDone)
-                    {
-                        yield return null;
-                    }
-
-                    if (!string.IsNullOrEmpty(m_uwr.error))
-                    {
-                        Debug.Log(m_uwr.error);
-                        yield break;
-                    }
-
-                    // Get downloaded asset bundle
-                    Texture = m_uwr.textureNonReadable;
-                    Texture.name = m_textureName;
-                }
+                // Get downloaded asset bundle
+                Texture = ((DownloadHandlerTexture)m_uwr.downloadHandler).texture;
+                Texture.name = m_textureName;
+                complete.Invoke();
+                return true;
+            }
+            else
+            {
+                Debug.Log(m_uwr.error);
+                return false;
             }
         }
     }

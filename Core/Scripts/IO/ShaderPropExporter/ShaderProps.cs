@@ -6,7 +6,7 @@ using UnityEngine;
 #endif
 
 
-namespace UniGLTF.ShaderPropExporter
+namespace UMa.GLTF.ShaderPropExporter
 {
     public enum ShaderPropertyType
     {
