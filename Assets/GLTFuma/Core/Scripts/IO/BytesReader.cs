@@ -3,77 +3,77 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class BytesReader
     {
-        Byte[] m_bytes;
-        int m_pos;
+        private byte[] _bytes;
+        private int _pos;
 
-        public BytesReader(Byte[] bytes, int pos=0)
+        public BytesReader(byte[] bytes, int pos=0)
         {
-            m_bytes = bytes;
-            m_pos = pos;
+            _bytes = bytes;
+            _pos = pos;
         }
 
         public string ReadString(int count, Encoding encoding)
         {
-            var s = encoding.GetString(m_bytes, m_pos, count);
-            m_pos += count;
+            var s = encoding.GetString(_bytes, _pos, count);
+            _pos += count;
             return s;
         }
 
         public float ReadSingle()
         {
-            var n = BitConverter.ToSingle(m_bytes, m_pos);
-            m_pos += 4;
+            var n = BitConverter.ToSingle(_bytes, _pos);
+            _pos += 4;
             return n;
         }
 
         public byte ReadUInt8()
         {
-            return m_bytes[m_pos++];
+            return _bytes[_pos++];
         }
 
         public UInt16 ReadUInt16()
         {
-            var n = BitConverter.ToUInt16(m_bytes, m_pos);
-            m_pos += 2;
+            var n = BitConverter.ToUInt16(_bytes, _pos);
+            _pos += 2;
             return n;
         }
 
         public sbyte ReadInt8()
         {
-            return (sbyte)m_bytes[m_pos++];
+            return (sbyte)_bytes[_pos++];
         }
 
         public Int16 ReadInt16()
         {
-            var n = BitConverter.ToInt16(m_bytes, m_pos);
-            m_pos += 2;
+            var n = BitConverter.ToInt16(_bytes, _pos);
+            _pos += 2;
             return n;
         }
 
         public int ReadInt32()
         {
-            var n = BitConverter.ToInt32(m_bytes, m_pos);
-            m_pos += 4;
+            var n = BitConverter.ToInt32(_bytes, _pos);
+            _pos += 4;
             return n;
         }
 
         public void ReadToArray<T>(T[] dst) where T : struct
         {
-            var size = new ArraySegment<Byte>(m_bytes, m_pos, m_bytes.Length - m_pos).MarshalCoyTo(dst);
-            m_pos += size;
+            var size = new ArraySegment<Byte>(_bytes, _pos, _bytes.Length - _pos).MarshalCoyTo(dst);
+            _pos += size;
         }
 
         public T ReadStruct<T>() where T : struct
         {
             var size = Marshal.SizeOf(typeof(T));
-            using (var pin = Pin.Create(new ArraySegment<Byte>(m_bytes, m_pos, m_bytes.Length - m_pos)))
+            using (var pin = new ArraySegment<Byte>(_bytes, _pos, _bytes.Length - _pos).ToPin())
             {
                 var s = (T)Marshal.PtrToStructure(pin.Ptr, typeof(T));
-                m_pos += size;
+                _pos += size;
                 return s;
             }
         }

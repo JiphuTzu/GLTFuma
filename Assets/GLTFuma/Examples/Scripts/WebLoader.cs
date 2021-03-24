@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
 using System.Text;
-using UniGLTF;
+using UMa.GLTF;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 //============================================================
 //支持中文，文件使用UTF-8编码
@@ -18,10 +17,10 @@ namespace UMa
     public class WebLoader : MonoBehaviour
     {
         public Text text;
-        //http://72studio.jcsureyes.com/presenting/presenting.gltf
+        //public string url = "http://72studio.jcsureyes.com/presenting/presenting.gltf";
         public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
         public bool loadOnStart = false;
-        private ImporterContext _loader;
+        private GLTFImporter _loader;
         private void Start()
         {
             if (loadOnStart && !string.IsNullOrEmpty(url))
@@ -38,13 +37,16 @@ namespace UMa
         public IEnumerator Load(WebStorage storage,Action<float> progress, Action<GameObject> complete)
         {
             var name = url.Substring(url.LastIndexOf("/")+1);
+            //加载.gltf文件
             yield return storage.Load(name,p=>progress?.Invoke(p*0.1f));
-            _loader = new ImporterContext();
+            _loader = new GLTFImporter();
             //Debug.Log(www.downloadHandler.text);
+            //用JsonUtility解析到gltf数据
             _loader.ParseJson(Encoding.UTF8.GetString(storage.Get(name).ToArray()));
-            int total = _loader.GLTF.buffers.Count + _loader.GLTF.images.Count;
+            //加载buffers里面的.bin数据
+            int total = _loader.gltf.buffers.Count;
             int current = 0;
-            foreach (var buffer in _loader.GLTF.buffers)
+            foreach (var buffer in _loader.gltf.buffers)
             {
                 Debug.Log(buffer.uri);
                 yield return storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
@@ -52,18 +54,21 @@ namespace UMa
                 buffer.OpenStorage(storage);
                 current++;
             }
-            foreach (var image in _loader.GLTF.images)
-            {
-                yield return storage.Load(image.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
-                current++;
-            }
+            //跳过图片的加载
+            //total = _loader.GLTF.images.Count;
+            // foreach (var image in _loader.GLTF.images)
+            // {
+            //     yield return storage.Load(image.uri, p => progress?.Invoke(0.5f + 0.4f * (current + p) / total));
+            //     current++;
+            // }
+            //解析mesh、material、animation等数据
             yield return _loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
             //loader.Parse(url,www.downloadHandler.data);
             _loader.ShowMeshes();
-            _loader.Root.SetActive(false);
-            _loader.Root.transform.SetParent(transform);
-            _loader.Root.SetActive(true);
-            complete?.Invoke(_loader.Root);
+            _loader.root.SetActive(false);
+            _loader.root.transform.SetParent(transform);
+            _loader.root.SetActive(true);
+            complete?.Invoke(_loader.root);
         }
         public void Unload()
         {

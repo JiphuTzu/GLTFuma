@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class TextureExportManager
     {

@@ -1,29 +1,30 @@
 ﻿using UnityEngine;
 using System;
 using UnityEngine.Rendering;
+using UniGLTF.UniUnlit;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public interface IMaterialImporter
     {
-        Material CreateMaterial(int i, glTFMaterial src);
+        Material CreateMaterial(int i, GLTFMaterial src);
     }
 
     public class MaterialImporter : IMaterialImporter
     {
         IShaderStore m_shaderStore;
 
-        ImporterContext m_context;
-        protected ImporterContext Context
+        GLTFImporter m_context;
+        protected GLTFImporter Context
         {
             get { return m_context; }
         }
 
-        public MaterialImporter(IShaderStore shaderStore, ImporterContext context)
+        public MaterialImporter(IShaderStore shaderStore, GLTFImporter context)
         {
             m_shaderStore = shaderStore;
             m_context = context;
@@ -64,7 +65,7 @@ namespace UniGLTF
         /// _SrcBlend
         /// _DstBlend
         /// _ZWrite
-        public virtual Material CreateMaterial(int i, glTFMaterial x)
+        public virtual Material CreateMaterial(int i, GLTFMaterial x)
         {
             var shader = m_shaderStore.GetShader(x);
             //Debug.LogFormat("[{0}]{1}", i, shader.name);
@@ -89,11 +90,12 @@ namespace UniGLTF
             if (x.extensions != null && x.extensions.KHR_materials_unlit != null)
             {
                 // texture
-                var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
-                if (texture != null)
-                {
-                    material.mainTexture = texture.Texture;
-                }
+                Context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
+                // var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
+                // if (texture != null)
+                // {
+                //     material.mainTexture = texture.Texture;
+                // }
 
                 // color
                 if (x.pbrMetallicRoughness.baseColorFactor != null && x.pbrMetallicRoughness.baseColorFactor.Length == 4)
@@ -105,33 +107,33 @@ namespace UniGLTF
                 //renderMode
                 if (x.alphaMode == "OPAQUE")
                 {
-                    UniUnlit.Utils.SetRenderMode(material, UniUnlit.UniUnlitRenderMode.Opaque);
+                    Utils.SetRenderMode(material, UniUnlitRenderMode.Opaque);
                 }
                 else if (x.alphaMode == "BLEND")
                 {
-                    UniUnlit.Utils.SetRenderMode(material, UniUnlit.UniUnlitRenderMode.Transparent);
+                    Utils.SetRenderMode(material, UniUnlitRenderMode.Transparent);
                 }
                 else if(x.alphaMode == "MASK")
                 {
-                    UniUnlit.Utils.SetRenderMode(material, UniUnlit.UniUnlitRenderMode.Cutout);
+                    Utils.SetRenderMode(material, UniUnlitRenderMode.Cutout);
                 }
                 else
                 {
                     // default OPAQUE
-                    UniUnlit.Utils.SetRenderMode(material, UniUnlit.UniUnlitRenderMode.Opaque);
+                    Utils.SetRenderMode(material, UniUnlitRenderMode.Opaque);
                 }
 
                 // culling
                 if (x.doubleSided)
                 {
-                    UniUnlit.Utils.SetCullMode(material, UniUnlit.UniUnlitCullMode.Off);
+                    Utils.SetCullMode(material, UniUnlitCullMode.Off);
                 }
                 else
                 {
-                    UniUnlit.Utils.SetCullMode(material, UniUnlit.UniUnlitCullMode.Back);
+                    Utils.SetCullMode(material, UniUnlitCullMode.Back);
                 }
 
-                UniUnlit.Utils.ValidateProperties(material, true);
+                Utils.ValidateProperties(material, true);
 
                 return material;
             }
@@ -147,22 +149,24 @@ namespace UniGLTF
 
                 if (x.pbrMetallicRoughness.baseColorTexture != null && x.pbrMetallicRoughness.baseColorTexture.index != -1)
                 {
-                    var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
-                    if (texture != null)
-                    {
-                        material.mainTexture = texture.Texture;
-                    }
+                    Context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
+                    // var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
+                    // if (texture != null)
+                    // {
+                    //     material.mainTexture = texture.Texture;
+                    // }
                 }
 
                 if (x.pbrMetallicRoughness.metallicRoughnessTexture != null && x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                 {
                     material.EnableKeyword("_METALLICGLOSSMAP");
-                    var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
-                    if (texture != null)
-                    {
-                        var prop = "_MetallicGlossMap";
-                        material.SetTexture(prop, texture.ConvertTexture(prop));
-                    }
+                    Context.SetMaterialTexture(material,x.pbrMetallicRoughness.metallicRoughnessTexture.index,"_MetallicGlossMap");
+                    // var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
+                    // if (texture != null)
+                    // {
+                    //     var prop = "_MetallicGlossMap";
+                    //     material.SetTexture(prop, texture.ConvertTexture(prop));
+                    // }
                 }
 
                 material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
@@ -172,22 +176,24 @@ namespace UniGLTF
             if (x.normalTexture != null && x.normalTexture.index != -1)
             {
                 material.EnableKeyword("_NORMALMAP");
-                var texture = Context.GetTexture(x.normalTexture.index);
-                if (texture != null)
-                {
-                    var prop = "_BumpMap";
-                    material.SetTexture(prop, texture.ConvertTexture(prop));
+                if(Context.SetMaterialTexture(material,x.normalTexture.index,"_BumpMap")){
+                // var texture = Context.GetTexture(x.normalTexture.index);
+                // if (texture != null)
+                // {
+                //     var prop = "_BumpMap";
+                //     material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_BumpScale", x.normalTexture.scale);
                 }
             }
 
             if (x.occlusionTexture != null && x.occlusionTexture.index != -1)
             {
-                var texture = Context.GetTexture(x.occlusionTexture.index);
-                if (texture != null)
-                {
-                    var prop = "_OcclusionMap";
-                    material.SetTexture(prop, texture.ConvertTexture(prop));
+                if(Context.SetMaterialTexture(material,x.occlusionTexture.index,"_OcclusionMap")){
+                // var texture = Context.GetTexture(x.occlusionTexture.index);
+                // if (texture != null)
+                // {
+                //     var prop = "_OcclusionMap";
+                //     material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_OcclusionStrength", x.occlusionTexture.strength);
                 }
             }
@@ -205,11 +211,12 @@ namespace UniGLTF
 
                 if (x.emissiveTexture.index != -1)
                 {
-                    var texture = Context.GetTexture(x.emissiveTexture.index);
-                    if (texture != null)
-                    {
-                        material.SetTexture("_EmissionMap", texture.Texture);
-                    }
+                    // var texture = Context.GetTexture(x.emissiveTexture.index);
+                    // if (texture != null)
+                    // {
+                    //     material.SetTexture("_EmissionMap", texture.Texture);
+                    // }
+                    Context.SetMaterialTexture(material,x.emissiveTexture.index,"_EmissionMap");
                 }
             }
 

@@ -7,7 +7,7 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     /// <summary>
     /// relative path from Unity project root.

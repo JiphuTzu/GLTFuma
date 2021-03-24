@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public static class TextureSamplerUtil
     {
@@ -23,26 +23,26 @@ namespace UniGLTF
             return new KeyValuePair<TextureWrapType, TextureWrapMode>(type, mode);
         }
 
-        public static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapMode(glTFTextureSampler sampler)
+        public static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapMode(GLTFTextureSampler sampler)
         {
 #if UNITY_2017_1_OR_NEWER
             if (sampler.wrapS == sampler.wrapT)
             {
                 switch (sampler.wrapS)
                 {
-                    case glWrap.NONE: // default
+                    case GLTFWrap.NONE: // default
                         yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.CLAMP_TO_EDGE:
+                    case GLTFWrap.CLAMP_TO_EDGE:
                         yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
                         break;
 
-                    case glWrap.REPEAT:
+                    case GLTFWrap.REPEAT:
                         yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.MIRRORED_REPEAT:
+                    case GLTFWrap.MIRRORED_REPEAT:
                         yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Mirror);
                         break;
 
@@ -54,19 +54,19 @@ namespace UniGLTF
             {
                 switch (sampler.wrapS)
                 {
-                    case glWrap.NONE: // default
+                    case GLTFWrap.NONE: // default
                         yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.CLAMP_TO_EDGE:
+                    case GLTFWrap.CLAMP_TO_EDGE:
                         yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Clamp);
                         break;
 
-                    case glWrap.REPEAT:
+                    case GLTFWrap.REPEAT:
                         yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.MIRRORED_REPEAT:
+                    case GLTFWrap.MIRRORED_REPEAT:
                         yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Mirror);
                         break;
 
@@ -75,19 +75,19 @@ namespace UniGLTF
                 }
                 switch (sampler.wrapT)
                 {
-                    case glWrap.NONE: // default
+                    case GLTFWrap.NONE: // default
                         yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.CLAMP_TO_EDGE:
+                    case GLTFWrap.CLAMP_TO_EDGE:
                         yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Clamp);
                         break;
 
-                    case glWrap.REPEAT:
+                    case GLTFWrap.REPEAT:
                         yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Repeat);
                         break;
 
-                    case glWrap.MIRRORED_REPEAT:
+                    case GLTFWrap.MIRRORED_REPEAT:
                         yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Mirror);
                         break;
 
@@ -121,21 +121,21 @@ namespace UniGLTF
         }
         #endregion
 
-        public static FilterMode ImportFilterMode(glFilter filterMode)
+        public static FilterMode ImportFilterMode(GLTFFilter filterMode)
         {
             switch (filterMode)
             {
-                case glFilter.NEAREST:
-                case glFilter.NEAREST_MIPMAP_LINEAR:
-                case glFilter.NEAREST_MIPMAP_NEAREST:
+                case GLTFFilter.NEAREST:
+                case GLTFFilter.NEAREST_MIPMAP_LINEAR:
+                case GLTFFilter.NEAREST_MIPMAP_NEAREST:
                     return FilterMode.Point;
 
-                case glFilter.NONE:
-                case glFilter.LINEAR:
-                case glFilter.LINEAR_MIPMAP_NEAREST:
+                case GLTFFilter.NONE:
+                case GLTFFilter.LINEAR:
+                case GLTFFilter.LINEAR_MIPMAP_NEAREST:
                     return FilterMode.Bilinear;
 
-                case glFilter.LINEAR_MIPMAP_LINEAR:
+                case GLTFFilter.LINEAR_MIPMAP_LINEAR:
                     return FilterMode.Trilinear;
 
                 default:
@@ -144,7 +144,7 @@ namespace UniGLTF
             }
         }
 
-        public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
+        public static void SetSampler(Texture2D texture, GLTFTextureSampler sampler)
         {
             if (texture == null)
             {
@@ -182,18 +182,18 @@ namespace UniGLTF
         }
 
         #region Export
-        public static glFilter ExportFilterMode(Texture texture)
+        public static GLTFFilter ExportFilterMode(Texture texture)
         {
             switch (texture.filterMode)
             {
                 case FilterMode.Point:
-                    return glFilter.NEAREST;
+                    return GLTFFilter.NEAREST;
 
                 case FilterMode.Bilinear:
-                    return glFilter.LINEAR;
+                    return GLTFFilter.LINEAR;
 
                 case FilterMode.Trilinear:
-                    return glFilter.LINEAR_MIPMAP_LINEAR;
+                    return GLTFFilter.LINEAR_MIPMAP_LINEAR;
 
                 default:
                     throw new NotImplementedException();
@@ -218,20 +218,20 @@ namespace UniGLTF
 #endif
         }
 
-        public static glWrap ExportWrapMode(TextureWrapMode wrapMode)
+        public static GLTFWrap ExportWrapMode(TextureWrapMode wrapMode)
         {
             switch (wrapMode)
             {
                 case TextureWrapMode.Clamp:
-                    return glWrap.CLAMP_TO_EDGE;
+                    return GLTFWrap.CLAMP_TO_EDGE;
 
                 case TextureWrapMode.Repeat:
-                    return glWrap.REPEAT;
+                    return GLTFWrap.REPEAT;
 
 #if UNITY_2017_1_OR_NEWER
                 case TextureWrapMode.Mirror:
                 case TextureWrapMode.MirrorOnce:
-                    return glWrap.MIRRORED_REPEAT;
+                    return GLTFWrap.MIRRORED_REPEAT;
 #endif
 
                 default:
@@ -239,12 +239,12 @@ namespace UniGLTF
             }
         }
 
-        public static glTFTextureSampler Export(Texture texture)
+        public static GLTFTextureSampler Export(Texture texture)
         {
             var filter = ExportFilterMode(texture);
             var wrapS = ExportWrapMode(GetWrapS(texture));
             var wrapT = ExportWrapMode(GetWrapT(texture));
-            return new glTFTextureSampler
+            return new GLTFTextureSampler
             {
                 magFilter = filter,
                 minFilter = filter,

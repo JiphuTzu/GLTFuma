@@ -6,7 +6,7 @@ using UniJSON;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class UniGLTFTests
     {
@@ -46,15 +46,15 @@ namespace UniGLTF
         public void UniGLTFSimpleSceneTest()
         {
             var go = CreateSimpelScene();
-            var context = new ImporterContext();
+            var context = new GLTFImporter();
 
             try
             {
                 // export
-                var gltf = new glTF();
+                var gltf = new GLTFRoot();
 
                 string json = null;
-                using (var exporter = new gltfExporter(gltf))
+                using (var exporter = new GLTFExporter(gltf))
                 {
                     exporter.Prepare(go);
                     exporter.Export();
@@ -70,7 +70,7 @@ namespace UniGLTF
                 //Debug.LogFormat("{0}", context.Json);
                 //context.Load();
 
-                AssertAreEqual(go.transform, context.Root.transform);
+                AssertAreEqual(go.transform, context.root.transform);
             }
             finally
             {
@@ -84,7 +84,7 @@ namespace UniGLTF
         {
             var initBytes = init == 0 ? null : new byte[init];
             var storage = new ArrayByteBuffer(initBytes);
-            var buffer = new glTFBuffer(storage);
+            var buffer = new GLTFBuffer(storage);
 
             var values = new List<byte>();
             int offset = 0;
@@ -94,7 +94,7 @@ namespace UniGLTF
                 values.AddRange(nums);
                 var bytes = new ArraySegment<Byte>(nums);
                 offset += x;
-                buffer.Append(bytes, glBufferTarget.NONE);
+                buffer.Append(bytes, GLTFBufferTarget.NONE);
             }
 
             Assert.AreEqual(values.Count, buffer.byteLength);
@@ -139,24 +139,24 @@ namespace UniGLTF
         [Test]
         public void VersionChecker()
         {
-            Assert.False(ImporterContext.IsGeneratedUniGLTFAndOlderThan("hoge", 1, 16));
-            Assert.False(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF-1.16", 1, 16));
-            Assert.True(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF-1.15", 1, 16));
-            Assert.False(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF-11.16", 1, 16));
-            Assert.True(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF-0.16", 1, 16));
-            Assert.True(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF", 1, 16));
+            Assert.False(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("hoge", 1, 16));
+            Assert.False(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("UniGLTF-1.16", 1, 16));
+            Assert.True(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("UniGLTF-1.15", 1, 16));
+            Assert.False(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("UniGLTF-11.16", 1, 16));
+            Assert.True(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("UniGLTF-0.16", 1, 16));
+            Assert.True(GLTFImporter.IsGeneratedGLTFumaAndOlderThan("UniGLTF", 1, 16));
         }
 
         [Test]
         public void MeshTest()
         {
-            var mesh = new glTFMesh("mesh")
+            var mesh = new GLTFMesh("mesh")
             {
-                primitives = new List<glTFPrimitives>
+                primitives = new List<GLTFPrimitives>
                 {
-                    new glTFPrimitives
+                    new GLTFPrimitives
                     {
-                        attributes=new glTFAttributes
+                        attributes=new GLTFAttributes
                         {
                             POSITION=0,
                         }
@@ -174,10 +174,10 @@ namespace UniGLTF
         [Test]
         public void PrimitiveTest()
         {
-            var prims = new List<glTFPrimitives> {
-                new glTFPrimitives
+            var prims = new List<GLTFPrimitives> {
+                new GLTFPrimitives
                 {
-                    attributes = new glTFAttributes
+                    attributes = new GLTFAttributes
                     {
                         POSITION = 0,
                     }

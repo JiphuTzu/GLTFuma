@@ -6,35 +6,35 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     class AnimationCurveData
     {
 #if UNITY_EDITOR
-        public AnimationUtility.TangentMode TangentMode { get; private set; }
-        public glTFAnimationTarget.AnimationPropertys AnimationProperty { get; private set; }
-        public int SamplerIndex { get; private set; }
-        public int ElementCount { get; private set; }
+        public AnimationUtility.TangentMode tangentMode { get; private set; }
+        public GLTFAnimationTarget.AnimationProperty animationProperty { get; private set; }
+        public int samplerIndex { get; private set; }
+        public int elementCount { get; private set; }
         public readonly List<AnimationKeyframeData> Keyframes = new List<AnimationKeyframeData>();
 
-        public AnimationCurveData(AnimationUtility.TangentMode tangentMode, glTFAnimationTarget.AnimationPropertys property, int samplerIndex, int elementCount)
+        public AnimationCurveData(AnimationUtility.TangentMode tangentMode, GLTFAnimationTarget.AnimationProperty property, int samplerIndex, int elementCount)
         {
-            TangentMode = tangentMode;
-            AnimationProperty = property;
-            SamplerIndex = samplerIndex;
-            ElementCount = elementCount;
+            this.tangentMode = tangentMode;
+            animationProperty = property;
+            this.samplerIndex = samplerIndex;
+            this.elementCount = elementCount;
         }
 
         public string GetInterpolation()
         {
-            switch (TangentMode)
+            switch (tangentMode)
             {
                 case AnimationUtility.TangentMode.Linear:
-                    return glTFAnimationTarget.Interpolations.LINEAR.ToString();
+                    return GLTFAnimationTarget.Interpolation.LINEAR.ToString();
                 case AnimationUtility.TangentMode.Constant:
-                    return glTFAnimationTarget.Interpolations.STEP.ToString();
+                    return GLTFAnimationTarget.Interpolation.STEP.ToString();
                 default:
-                    return glTFAnimationTarget.Interpolations.LINEAR.ToString();
+                    return GLTFAnimationTarget.Interpolation.LINEAR.ToString();
             }
         }
 
@@ -46,15 +46,15 @@ namespace UniGLTF
         /// <param name="valueOffset"></param>
         public void SetKeyframeData(float time, float value, int valueOffset)
         {
-            var existKeyframe = Keyframes.FirstOrDefault(x => x.Time == time);
+            var existKeyframe = Keyframes.FirstOrDefault(x => x.time == time);
             if (existKeyframe != null)
             {
                 existKeyframe.SetValue(value, valueOffset);
             }
             else
             {
-                var newKeyframe = GetKeyframeData(AnimationProperty, ElementCount);
-                newKeyframe.Time = time;
+                var newKeyframe = GetKeyframeData(animationProperty, elementCount);
+                newKeyframe.time = time;
                 newKeyframe.SetValue(value, valueOffset);
                 Keyframes.Add(newKeyframe);
             }
@@ -70,7 +70,7 @@ namespace UniGLTF
                 return;
             }
 
-            Keyframes.Sort((x, y) => (x.Time < y.Time) ? -1 : 1);
+            Keyframes.Sort((x, y) => (x.time < y.time) ? -1 : 1);
 
             for (int i = 1; i < Keyframes.Count; i++)
             {
@@ -92,25 +92,25 @@ namespace UniGLTF
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        private static AnimationKeyframeData GetKeyframeData(glTFAnimationTarget.AnimationPropertys property, int elementCount)
+        private static AnimationKeyframeData GetKeyframeData(GLTFAnimationTarget.AnimationProperty property, int elementCount)
         {
             switch (property)
             {
-                case glTFAnimationTarget.AnimationPropertys.Translation:
+                case GLTFAnimationTarget.AnimationProperty.Translation:
                     return new AnimationKeyframeData(elementCount, (values) =>
                     {
                         var temp = new Vector3(values[0], values[1], values[2]);
                         return temp.ReverseZ().ToArray();
                     });
-                case glTFAnimationTarget.AnimationPropertys.Rotation:
+                case GLTFAnimationTarget.AnimationProperty.Rotation:
                     return new AnimationKeyframeData(elementCount, (values) =>
                     {
                         var temp = new Quaternion(values[0], values[1], values[2], values[3]);
                         return temp.ReverseZ().ToArray();
                     });
-                case glTFAnimationTarget.AnimationPropertys.Scale:
+                case GLTFAnimationTarget.AnimationProperty.Scale:
                     return new AnimationKeyframeData(elementCount, null);
-                case glTFAnimationTarget.AnimationPropertys.BlendShape:
+                case GLTFAnimationTarget.AnimationProperty.BlendShape:
                     return new AnimationKeyframeData(elementCount, null);
                 default:
                     return null;

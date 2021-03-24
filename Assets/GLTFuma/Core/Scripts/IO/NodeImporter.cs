@@ -4,11 +4,11 @@ using System.Linq;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public static class NodeImporter
     {
-        public static GameObject ImportNode(glTFNode node)
+        public static GameObject ImportNode(GLTFNode node)
         {
             var nodeName = node.name;
             if (!string.IsNullOrEmpty(nodeName) && nodeName.Contains("/"))
@@ -45,7 +45,7 @@ namespace UniGLTF
             }
             if (node.matrix != null && node.matrix.Length > 0)
             {
-                var m = UnityExtensions.MatrixFromArray(node.matrix);
+                var m = node.matrix.ToMatrix();
                 go.transform.localRotation = m.ExtractRotation();
                 go.transform.localPosition = m.ExtractPosition();
                 go.transform.localScale = m.ExtractScale();
@@ -60,9 +60,9 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
-        public static TransformWithSkin BuildHierarchy(ImporterContext context, int i)
+        public static TransformWithSkin BuildHierarchy(GLTFImporter context, int i)
         {
-            var go = context.Nodes[i].gameObject;
+            var go = context.nodes[i].gameObject;
             if (string.IsNullOrEmpty(go.name))
             {
                 go.name = string.Format("node{0:000}", i);
@@ -76,12 +76,12 @@ namespace UniGLTF
             //
             // build hierachy
             //
-            var node = context.GLTF.nodes[i];
+            var node = context.gltf.nodes[i];
             if (node.children != null)
             {
                 foreach (var child in node.children)
                 {
-                    context.Nodes[child].transform.SetParent(context.Nodes[i].transform,
+                    context.nodes[child].transform.SetParent(context.nodes[i].transform,
                         false // node has local transform
                         );
                 }
@@ -92,17 +92,17 @@ namespace UniGLTF
             //
             if (node.mesh != -1)
             {
-                var mesh = context.Meshes[node.mesh];
-                if (mesh.Mesh.blendShapeCount == 0 && node.skin == -1)
+                var mesh = context.meshes[node.mesh];
+                if (mesh.mesh.blendShapeCount == 0 && node.skin == -1)
                 {
                     // without blendshape and bone skinning
                     var filter = go.AddComponent<MeshFilter>();
-                    filter.sharedMesh = mesh.Mesh;
+                    filter.sharedMesh = mesh.mesh;
                     var renderer = go.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterials = mesh.Materials;
+                    renderer.sharedMaterials = mesh.materials;
                     // invisible in loading
                     renderer.enabled = false;
-                    mesh.Renderers.Add(renderer);
+                    mesh.renderers.Add(renderer);
                 }
                 else
                 {
@@ -113,11 +113,11 @@ namespace UniGLTF
                         nodeWithSkin.SkinIndex = node.skin;
                     }
 
-                    renderer.sharedMesh = mesh.Mesh;
-                    renderer.sharedMaterials = mesh.Materials;
+                    renderer.sharedMesh = mesh.mesh;
+                    renderer.sharedMaterials = mesh.materials;
                     // invisible in loading
                     renderer.enabled = false;
-                    mesh.Renderers.Add(renderer);
+                    mesh.renderers.Add(renderer);
                 }
             }
 
@@ -127,14 +127,14 @@ namespace UniGLTF
         //
         // fix node's coordinate. z-back to z-forward
         //
-        public static void FixCoordinate(ImporterContext context, List<TransformWithSkin> nodes)
+        public static void FixCoordinate(GLTFImporter context, List<TransformWithSkin> nodes)
         {
             var globalTransformMap = nodes.ToDictionary(x => x.Transform, x => new PosRot
             {
-                Position = x.Transform.position,
-                Rotation = x.Transform.rotation,
+                position = x.Transform.position,
+                rotation = x.Transform.rotation,
             });
-            foreach (var x in context.GLTF.rootnodes)
+            foreach (var x in context.gltf.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
@@ -144,13 +144,13 @@ namespace UniGLTF
                 foreach (var transform in t.Traverse())
                 {
                     var g = globalTransformMap[transform];
-                    transform.position = g.Position.ReverseZ();
-                    transform.rotation = g.Rotation.ReverseZ();
+                    transform.position = g.position.ReverseZ();
+                    transform.rotation = g.rotation.ReverseZ();
                 }
             }
         }
 
-        public static void SetupSkinning(ImporterContext context, List<TransformWithSkin> nodes, int i)
+        public static void SetupSkinning(GLTFImporter context, List<TransformWithSkin> nodes, int i)
         {
             var x = nodes[i];
             var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
@@ -162,9 +162,9 @@ namespace UniGLTF
                     if (mesh == null) throw new Exception();
                     if (skinnedMeshRenderer == null) throw new Exception();
 
-                    if (x.SkinIndex.Value < context.GLTF.skins.Count)
+                    if (x.SkinIndex.Value < context.gltf.skins.Count)
                     {
-                        var skin = context.GLTF.skins[x.SkinIndex.Value];
+                        var skin = context.gltf.skins[x.SkinIndex.Value];
 
                         skinnedMeshRenderer.sharedMesh = null;
 
@@ -185,7 +185,7 @@ namespace UniGLTF
                             var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = calculatedBindPoses;
 #else
-                            var bindPoses = context.GLTF.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
+                            var bindPoses = context.gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
                                 .Select(y => y.ReverseZ())
                                 .ToArray()
                                 ;

@@ -2,7 +2,7 @@
 using System.IO;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public interface IStorage
     {
@@ -53,7 +53,7 @@ namespace UniGLTF
         {
             var bytes =
                 (url.StartsWith("data:"))
-                ? UriByteBuffer.ReadEmbeded(url)
+                ? url.ReadEmbeded()
                 : File.ReadAllBytes(Path.Combine(m_root, url))
                 ;
             return new ArraySegment<byte>(bytes);

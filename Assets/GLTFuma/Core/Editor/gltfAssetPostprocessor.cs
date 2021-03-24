@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class gltfAssetPostprocessor : AssetPostprocessor
     {
@@ -38,7 +38,7 @@ namespace UniGLTF
                 return;
             }
 
-            var context = new ImporterContext();
+            var context = new GLTFImporter();
             context.Parse(src);
 
             // Extract textures to assets folder
@@ -47,7 +47,7 @@ namespace UniGLTF
             ImportDelayed(src, prefabPath, context);
         }
 
-        static void ImportDelayed(string src, UnityPath prefabPath, ImporterContext context)
+        static void ImportDelayed(string src, UnityPath prefabPath, GLTFImporter context)
         {
             EditorApplication.delayCall += () =>
                 {

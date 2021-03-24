@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class UniGLTFException : Exception
     {

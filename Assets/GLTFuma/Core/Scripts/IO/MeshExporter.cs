@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public struct MeshWithRenderer
     {
@@ -13,28 +13,28 @@ namespace UniGLTF
 
     public static class MeshExporter
     {
-        static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex,
+        static GLTFMesh ExportPrimitives(GLTFRoot gltf, int bufferIndex,
             string rendererName,
             Mesh mesh, Material[] materials,
             List<Material> unityMaterials)
         {
             var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
-            var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
+            var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, GLTFBufferTarget.ARRAY_BUFFER);
             gltf.accessors[positionAccessorIndex].min = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
             gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
 
-            var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), GLTFBufferTarget.ARRAY_BUFFER);
 #if GLTF_EXPORT_TANGENTS
             var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
 #endif
-            var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseUV()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-            var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, glBufferTarget.ARRAY_BUFFER);
+            var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseUV()).ToArray(), GLTFBufferTarget.ARRAY_BUFFER);
+            var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, GLTFBufferTarget.ARRAY_BUFFER);
 
             var boneweights = mesh.boneWeights;
-            var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
-            var jointsAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), GLTFBufferTarget.ARRAY_BUFFER);
+            var jointsAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), GLTFBufferTarget.ARRAY_BUFFER);
 
-            var attributes = new glTFAttributes
+            var attributes = new GLTFAttributes
             {
                 POSITION = positionAccessorIndex,
             };
@@ -65,11 +65,11 @@ namespace UniGLTF
                 attributes.JOINTS_0 = jointsAccessorIndex;
             }
 
-            var gltfMesh = new glTFMesh(mesh.name);
+            var gltfMesh = new GLTFMesh(mesh.name);
             for (int j = 0; j < mesh.subMeshCount; ++j)
             {
                 var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
-                var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
+                var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, GLTFBufferTarget.ELEMENT_ARRAY_BUFFER);
 
                 if (j >= materials.Length)
                 {
@@ -77,7 +77,7 @@ namespace UniGLTF
                     break;
                 }
 
-                gltfMesh.primitives.Add(new glTFPrimitives
+                gltfMesh.primitives.Add(new GLTFPrimitives
                 {
                     attributes = attributes,
                     indices = indicesAccessorIndex,
@@ -102,7 +102,7 @@ namespace UniGLTF
             return useSparse;
         }
 
-        static gltfMorphTarget ExportMorphTarget(glTF gltf, int bufferIndex,
+        static GLTFMorphTarget ExportMorphTarget(GLTFRoot gltf, int bufferIndex,
             Mesh mesh, int j,
             bool useSparseAccessorForMorphTarget)
         {
@@ -163,7 +163,7 @@ namespace UniGLTF
                     blendShapePositionAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex, accessorCount,
                         blendShapeVertices,
                         sparseIndices, sparseIndicesViewIndex,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
 
                 if (useNormal)
@@ -172,7 +172,7 @@ namespace UniGLTF
                     blendShapeNormalAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex, accessorCount,
                         blendShapeNormals,
                         sparseIndices, sparseIndicesViewIndex,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
 
                 if (useTangent)
@@ -180,7 +180,7 @@ namespace UniGLTF
                     blendShapeTangents = sparseIndices.Select(x => blendShapeTangents[x].ReverseZ()).ToArray();
                     blendShapeTangentAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex, accessorCount,
                         blendShapeTangents, sparseIndices, sparseIndicesViewIndex,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
             }
             else
@@ -190,7 +190,7 @@ namespace UniGLTF
                 {
                     blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
                         blendShapeVertices,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
 
                 if (useNormal)
@@ -198,7 +198,7 @@ namespace UniGLTF
                     for (int i = 0; i < blendShapeNormals.Length; ++i) blendShapeNormals[i] = blendShapeNormals[i].ReverseZ();
                     blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
                         blendShapeNormals,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
 
                 if (useTangent)
@@ -206,7 +206,7 @@ namespace UniGLTF
                     for (int i = 0; i < blendShapeTangents.Length; ++i) blendShapeTangents[i] = blendShapeTangents[i].ReverseZ();
                     blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
                         blendShapeTangents,
-                        glBufferTarget.ARRAY_BUFFER);
+                        GLTFBufferTarget.ARRAY_BUFFER);
                 }
             }
 
@@ -216,7 +216,7 @@ namespace UniGLTF
                 gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
             }
 
-            return new gltfMorphTarget
+            return new GLTFMorphTarget
             {
                 POSITION = blendShapePositionAccessorIndex,
                 NORMAL = blendShapeNormalAccessorIndex,
@@ -224,7 +224,7 @@ namespace UniGLTF
             };
         }
 
-        public static void ExportMeshes(glTF gltf, int bufferIndex,
+        public static void ExportMeshes(GLTFRoot gltf, int bufferIndex,
             List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials,
             bool useSparseAccessorForMorphTarget)
         {

@@ -2,8 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using UniGLTF;
+using UMa.GLTF;
 using UnityEngine;
 using UnityEngine.Networking;
 //============================================================
@@ -48,7 +47,7 @@ namespace UMa
         {
             var bytes =
                 (url.StartsWith("data:"))
-                ? UriByteBuffer.ReadEmbeded(url)
+                ? url.ReadEmbeded()
                 : _data[url]
                 ;
 			Debug.Log("get storage ... "+url + " ======= "+bytes.Length);

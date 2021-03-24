@@ -7,46 +7,46 @@ using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public static class TextureIO
     {
-        public static RenderTextureReadWrite GetColorSpace(glTFTextureTypes textureType)
+        public static RenderTextureReadWrite GetColorSpace(GLTFTextureType textureType)
         {
             switch (textureType)
             {
-                case glTFTextureTypes.Metallic:
-                case glTFTextureTypes.Normal:
-                case glTFTextureTypes.Occlusion:
+                case GLTFTextureType.Metallic:
+                case GLTFTextureType.Normal:
+                case GLTFTextureType.Occlusion:
                     return RenderTextureReadWrite.Linear;
-                case glTFTextureTypes.BaseColor:
-                case glTFTextureTypes.Emissive:
+                case GLTFTextureType.BaseColor:
+                case GLTFTextureType.Emissive:
                     return RenderTextureReadWrite.sRGB;
                 default:
                     return RenderTextureReadWrite.sRGB;
             }
         }
 
-        public static glTFTextureTypes GetglTFTextureType(string shaderName, string propName)
+        public static GLTFTextureType GetglTFTextureType(string shaderName, string propName)
         {
             switch (propName)
             {
                 case "_Color":
-                    return glTFTextureTypes.BaseColor;
+                    return GLTFTextureType.BaseColor;
                 case "_MetallicGlossMap":
-                    return glTFTextureTypes.Metallic;
+                    return GLTFTextureType.Metallic;
                 case "_BumpMap":
-                    return glTFTextureTypes.Normal;
+                    return GLTFTextureType.Normal;
                 case "_OcclusionMap":
-                    return glTFTextureTypes.Occlusion;
+                    return GLTFTextureType.Occlusion;
                 case "_EmissionMap":
-                    return glTFTextureTypes.Emissive;
+                    return GLTFTextureType.Emissive;
                 default:
-                    return glTFTextureTypes.Unknown;
+                    return GLTFTextureType.Unknown;
             }
         }
 
-        public static glTFTextureTypes GetglTFTextureType(glTF glTf, int textureIndex)
+        public static GLTFTextureType GetglTFTextureType(GLTFRoot glTf, int textureIndex)
         {
             foreach (var material in glTf.materials)
             {
@@ -56,7 +56,7 @@ namespace UniGLTF
                     return textureInfo.TextreType;
                 }
             }
-            return glTFTextureTypes.Unknown;
+            return GLTFTextureType.Unknown;
         }
 
 #if UNITY_EDITOR
@@ -82,9 +82,9 @@ namespace UniGLTF
         public struct TextureExportItem
         {
             public Texture Texture;
-            public glTFTextureTypes TextureType;
+            public GLTFTextureType TextureType;
 
-            public TextureExportItem(Texture texture, glTFTextureTypes textureType)
+            public TextureExportItem(Texture texture, GLTFTextureType textureType)
             {
                 Texture = texture;
                 TextureType = textureType;
@@ -96,7 +96,7 @@ namespace UniGLTF
             var props = ShaderPropExporter.PreShaderPropExporter.GetPropsForSupportedShader(m.shader.name);
             if (props == null)
             {
-                yield return new TextureExportItem(m.mainTexture, glTFTextureTypes.BaseColor);
+                yield return new TextureExportItem(m.mainTexture, GLTFTextureType.BaseColor);
             }
 
             foreach (var prop in props.Properties)
@@ -116,7 +116,7 @@ namespace UniGLTF
             public string Mime;
         }
 
-        static BytesWithMime GetBytesWithMime(Texture texture, glTFTextureTypes textureType)
+        static BytesWithMime GetBytesWithMime(Texture texture, GLTFTextureType textureType)
         {
 #if UNITY_EDITOR
             var path = UnityPath.FromAsset(texture);
@@ -140,17 +140,17 @@ namespace UniGLTF
             };
         }
 
-        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, glTFTextureTypes textureType)
+        public static int ExportTexture(GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType)
         {
             var bytesWithMime = GetBytesWithMime(texture, textureType); ;
 
             // add view
-            var view = gltf.buffers[bufferIndex].Append(bytesWithMime.Bytes, glBufferTarget.NONE);
+            var view = gltf.buffers[bufferIndex].Append(bytesWithMime.Bytes, GLTFBufferTarget.NONE);
             var viewIndex = gltf.AddBufferView(view);
 
             // add image
             var imageIndex = gltf.images.Count;
-            gltf.images.Add(new glTFImage
+            gltf.images.Add(new GLTFImage
             {
                 name = texture.name,
                 bufferView = viewIndex,
@@ -163,7 +163,7 @@ namespace UniGLTF
             gltf.samplers.Add(sampler);
 
             // add texture
-            gltf.textures.Add(new glTFTexture
+            gltf.textures.Add(new GLTFTexture
             {
                 sampler = samplerIndex,
                 source = imageIndex,

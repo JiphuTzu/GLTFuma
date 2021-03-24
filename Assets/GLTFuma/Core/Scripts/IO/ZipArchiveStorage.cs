@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 /// <summary>
 /// https://en.wikipedia.org/wiki/Zip_(file_format)
 /// </summary>
-namespace UniGLTF.Zip
+namespace UMa.GLTF.Zip
 {
 
     enum CompressionMethod : ushort

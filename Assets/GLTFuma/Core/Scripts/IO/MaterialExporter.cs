@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using UniGLTF.UniUnlit;
+﻿using UniGLTF.UniUnlit;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public enum glTFBlendMode
     {
@@ -16,12 +13,12 @@ namespace UniGLTF
 
     public interface IMaterialExporter
     {
-        glTFMaterial ExportMaterial(Material m, TextureExportManager textureManager);
+        GLTFMaterial ExportMaterial(Material m, TextureExportManager textureManager);
     }
 
     public class MaterialExporter : IMaterialExporter
     {
-        public virtual glTFMaterial ExportMaterial(Material m, TextureExportManager textureManager)
+        public virtual GLTFMaterial ExportMaterial(Material m, TextureExportManager textureManager)
         {
             var material = CreateMaterial(m);
 
@@ -36,7 +33,7 @@ namespace UniGLTF
             return material;
         }
 
-        static void Export_Color(Material m, TextureExportManager textureManager, glTFMaterial material)
+        static void Export_Color(Material m, TextureExportManager textureManager, GLTFMaterial material)
         {
             if (m.HasProperty("_Color"))
             {
@@ -48,7 +45,7 @@ namespace UniGLTF
                 var index = textureManager.CopyAndGetIndex(m.GetTexture("_MainTex"), RenderTextureReadWrite.sRGB);
                 if (index != -1)
                 {
-                    material.pbrMetallicRoughness.baseColorTexture = new glTFMaterialBaseColorTextureInfo()
+                    material.pbrMetallicRoughness.baseColorTexture = new GLTFMaterialBaseColorTextureInfo()
                     {
                         index = index,
                     };
@@ -56,7 +53,7 @@ namespace UniGLTF
             }
         }
 
-        static void Export_Metallic(Material m, TextureExportManager textureManager, glTFMaterial material)
+        static void Export_Metallic(Material m, TextureExportManager textureManager, GLTFMaterial material)
         {
             int index = -1;
             if (m.HasProperty("_MetallicGlossMap"))
@@ -64,7 +61,7 @@ namespace UniGLTF
                 index = textureManager.ConvertAndGetIndex(m.GetTexture("_MetallicGlossMap"), new MetallicRoughnessConverter());
                 if (index != -1)
                 {
-                    material.pbrMetallicRoughness.metallicRoughnessTexture = new glTFMaterialMetallicRoughnessTextureInfo()
+                    material.pbrMetallicRoughness.metallicRoughnessTexture = new GLTFMaterialMetallicRoughnessTextureInfo()
                     {
                         index = index,
                     };
@@ -90,14 +87,14 @@ namespace UniGLTF
             }
         }
 
-        static void Export_Normal(Material m, TextureExportManager textureManager, glTFMaterial material)
+        static void Export_Normal(Material m, TextureExportManager textureManager, GLTFMaterial material)
         {
             if (m.HasProperty("_BumpMap"))
             {
                 var index = textureManager.ConvertAndGetIndex(m.GetTexture("_BumpMap"), new NormalConverter());
                 if (index != -1)
                 {
-                    material.normalTexture = new glTFMaterialNormalTextureInfo()
+                    material.normalTexture = new GLTFMaterialNormalTextureInfo()
                     {
                         index = index,
                     };
@@ -110,14 +107,14 @@ namespace UniGLTF
             }
         }
 
-        static void Export_Occlusion(Material m, TextureExportManager textureManager, glTFMaterial material)
+        static void Export_Occlusion(Material m, TextureExportManager textureManager, GLTFMaterial material)
         {
             if (m.HasProperty("_OcclusionMap"))
             {
                 var index = textureManager.ConvertAndGetIndex(m.GetTexture("_OcclusionMap"), new OcclusionConverter());
                 if (index != -1)
                 {
-                    material.occlusionTexture = new glTFMaterialOcclusionTextureInfo()
+                    material.occlusionTexture = new GLTFMaterialOcclusionTextureInfo()
                     {
                         index = index,
                     };
@@ -130,7 +127,7 @@ namespace UniGLTF
             }
         }
 
-        static void Export_Emission(Material m, TextureExportManager textureManager, glTFMaterial material)
+        static void Export_Emission(Material m, TextureExportManager textureManager, GLTFMaterial material)
         {
             if (m.HasProperty("_EmissionColor"))
             {
@@ -143,7 +140,7 @@ namespace UniGLTF
                 var index = textureManager.CopyAndGetIndex(m.GetTexture("_EmissionMap"), RenderTextureReadWrite.sRGB);
                 if (index != -1)
                 {
-                    material.emissiveTexture = new glTFMaterialEmissiveTextureInfo()
+                    material.emissiveTexture = new GLTFMaterialEmissiveTextureInfo()
                     {
                         index = index,
                     };
@@ -151,7 +148,7 @@ namespace UniGLTF
             }
         }
 
-        protected virtual glTFMaterial CreateMaterial(Material m)
+        protected virtual GLTFMaterial CreateMaterial(Material m)
         {
             switch (m.shader.name)
             {
@@ -175,40 +172,40 @@ namespace UniGLTF
             }
         }
 
-        static glTFMaterial Export_UnlitColor(Material m)
+        static GLTFMaterial Export_UnlitColor(Material m)
         {
-            var material = glTF_KHR_materials_unlit.CreateDefault();
+            var material = KHRMaterialUnlit.CreateDefault();
             material.alphaMode = glTFBlendMode.OPAQUE.ToString();
             return material;
         }
 
-        static glTFMaterial Export_UnlitTexture(Material m)
+        static GLTFMaterial Export_UnlitTexture(Material m)
         {
-            var material = glTF_KHR_materials_unlit.CreateDefault();
+            var material = KHRMaterialUnlit.CreateDefault();
             material.alphaMode = glTFBlendMode.OPAQUE.ToString();
             return material;
         }
 
-        static glTFMaterial Export_UnlitTransparent(Material m)
+        static GLTFMaterial Export_UnlitTransparent(Material m)
         {
-            var material = glTF_KHR_materials_unlit.CreateDefault();
+            var material = KHRMaterialUnlit.CreateDefault();
             material.alphaMode = glTFBlendMode.BLEND.ToString();
             return material;
         }
 
-        static glTFMaterial Export_UnlitCutout(Material m)
+        static GLTFMaterial Export_UnlitCutout(Material m)
         {
-            var material = glTF_KHR_materials_unlit.CreateDefault();
+            var material = KHRMaterialUnlit.CreateDefault();
             material.alphaMode = glTFBlendMode.MASK.ToString();
             material.alphaCutoff = m.GetFloat("_Cutoff");
             return material;
         }
 
-        private glTFMaterial Export_UniUnlit(Material m)
+        private GLTFMaterial Export_UniUnlit(Material m)
         {
-            var material = glTF_KHR_materials_unlit.CreateDefault();
+            var material = KHRMaterialUnlit.CreateDefault();
 
-            var renderMode = UniUnlit.Utils.GetRenderMode(m);
+            var renderMode = Utils.GetRenderMode(m);
             if (renderMode == UniUnlitRenderMode.Opaque)
             {
                 material.alphaMode = glTFBlendMode.OPAQUE.ToString();
@@ -226,7 +223,7 @@ namespace UniGLTF
                 material.alphaMode = glTFBlendMode.OPAQUE.ToString();
             }
 
-            var cullMode = UniUnlit.Utils.GetCullMode(m);
+            var cullMode = Utils.GetCullMode(m);
             if (cullMode == UniUnlitCullMode.Off)
             {
                 material.doubleSided = true;
@@ -239,11 +236,11 @@ namespace UniGLTF
             return material;
         }
 
-        static glTFMaterial Export_Standard(Material m)
+        static GLTFMaterial Export_Standard(Material m)
         {
-            var material = new glTFMaterial
+            var material = new GLTFMaterial
             {
-                pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
+                pbrMetallicRoughness = new GLTFPbrMetallicRoughness(),
             };
 
             switch (m.GetTag("RenderType", true))

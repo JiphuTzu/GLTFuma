@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/UMAGLTF/Examples/Scenes/test.unity
+    path: Assets/GLTFuma/Examples/Scenes/test.unity
     guid: 79af33244e10f483c948d6695b2c580f
   m_configObjects: {}

@@ -2,36 +2,69 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
-using System.IO;
 using System;
+using System.Threading.Tasks;
+using UnityEngine.Networking;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class TextureItem
     {
         private int m_textureIndex;
-        public Texture2D Texture
+        public Texture2D texture
         {
             get
             {
                 return m_textureLoader.Texture;
             }
         }
+        public void Load(GLTFRoot gltf,IStorage storage, Action<Texture2D> complete){
+            Debug.Log("TextureItem Load ");
+            //m_textureLoader.Load(complete);
+           
+            StartLoad(gltf,storage,complete);
+        }
+        private async Task<bool> StartLoad(GLTFRoot gltf,IStorage storage,Action<Texture2D> complete)
+        {
+             var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
+            gltf.GetImageBytes(storage, imageIndex, out var name, out var url);
+            if (string.IsNullOrEmpty(url)) return false;
+            await Task.Yield();
+            Debug.LogFormat("UnityWebRequest: {0}", url);
+            var m_uwr = UnityWebRequestTexture.GetTexture(url);
+            Debug.Log("load texture ... "+url);
+            var ao = m_uwr.SendWebRequest();
+            // wait for request
+            while (!m_uwr.isDone)
+            {
+                await Task.Yield();
+            }
+
+            if (string.IsNullOrEmpty(m_uwr.error))
+            {
+                // Get downloaded asset bundle
+                var texture = ((DownloadHandlerTexture)m_uwr.downloadHandler).texture;
+                texture.name = name;
+                complete.Invoke(texture);
+                return true;
+            }
+            else
+            {
+                Debug.Log(m_uwr.error);
+                return false;
+            }
+        }
 
         #region Texture converter
-        private Dictionary<string, Texture2D> m_converts = new Dictionary<string, Texture2D>();
-        public Dictionary<string, Texture2D> Converts
-        {
-            get { return m_converts; }
-        }
+        private Dictionary<string, Texture2D> _converts = new Dictionary<string, Texture2D>();
 
         public Texture2D ConvertTexture(string prop)
         {
-            var convertedTexture = Converts.FirstOrDefault(x => x.Key == prop);
+            var convertedTexture = _converts.FirstOrDefault(x => x.Key == prop);
             if (convertedTexture.Value != null)
                 return convertedTexture.Value;
 
@@ -39,38 +72,38 @@ namespace UniGLTF
             {
                 if (Application.isPlaying)
                 {
-                    var converted = new NormalConverter().GetImportTexture(Texture);
-                    m_converts.Add(prop, converted);
+                    var converted = new NormalConverter().GetImportTexture(texture);
+                    _converts.Add(prop, converted);
                     return converted;
                 }
                 else
                 {
 #if UNITY_EDITOR
-                    var textureAssetPath = AssetDatabase.GetAssetPath(Texture);
+                    var textureAssetPath = AssetDatabase.GetAssetPath(texture);
                     if (!string.IsNullOrEmpty(textureAssetPath))
                     {
                         TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
                     }
                     else
                     {
-                        Debug.LogWarningFormat("no asset for {0}", Texture);
+                        Debug.LogWarningFormat("no asset for {0}", texture);
                     }
 #endif
-                    return Texture;
+                    return texture;
                 }
             }
 
             if (prop == "_MetallicGlossMap")
             {
-                var converted = new MetallicRoughnessConverter().GetImportTexture(Texture);
-                m_converts.Add(prop, converted);
+                var converted = new MetallicRoughnessConverter().GetImportTexture(texture);
+                _converts.Add(prop, converted);
                 return converted;
             }
 
             if (prop == "_OcclusionMap")
             {
-                var converted = new OcclusionConverter().GetImportTexture(Texture);
-                m_converts.Add(prop, converted);
+                var converted = new OcclusionConverter().GetImportTexture(texture);
+                _converts.Add(prop, converted);
                 return converted;
             }
 
@@ -78,21 +111,17 @@ namespace UniGLTF
         }
         #endregion
 
-        public bool IsAsset
-        {
-            private set;
-            get;
-        }
+        public bool isAsset{get;private set;}
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
-            if (!IsAsset)
+            if (!isAsset)
             {
-                yield return Texture;
+                yield return texture;
             }
-            if (m_converts.Any())
+            if (_converts.Any())
             {
-                foreach (var texture in m_converts)
+                foreach (var texture in _converts)
                 {
                     yield return texture.Value;
                 }
@@ -106,11 +135,11 @@ namespace UniGLTF
         public TextureItem(int index)
         {
             m_textureIndex = index;
-#if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
+// #if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
             m_textureLoader = new UnityWebRequestTextureLoader(m_textureIndex);
-#else
-            m_textureLoader = new TextureLoader(m_textureIndex);
-#endif
+// #else
+//             m_textureLoader = new TextureLoader(m_textureIndex);
+// #endif
         }
 
 #if UNITY_EDITOR
@@ -123,13 +152,13 @@ namespace UniGLTF
         public TextureItem(int index, UnityPath assetPath, string textureName)
         {
             m_textureIndex = index;
-            IsAsset = true;
+            isAsset = true;
             m_textureLoader = new AssetTextureLoader(assetPath, textureName);
         }
 #endif
 
         #region Process
-        ITextureLoader m_textureLoader;
+        private ITextureLoader m_textureLoader;
 
         // public void Process(glTF gltf, IStorage storage)
         // {
@@ -137,18 +166,18 @@ namespace UniGLTF
         //     ProcessOnMainThreadCoroutine(gltf).CoroutinetoEnd();
         // }
 
-        public IEnumerator ProcessCoroutine(glTF gltf, IStorage storage)
+        public IEnumerator ProcessCoroutine(GLTFRoot gltf, IStorage storage)
         {
             ProcessOnAnyThread(gltf, storage);
             yield return ProcessOnMainThreadCoroutine(gltf);
         }
 
-        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
+        public void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage)
         {
             m_textureLoader.ProcessOnAnyThread(gltf, storage);
         }
 
-        public IEnumerator ProcessOnMainThreadCoroutine(glTF gltf)
+        public IEnumerator ProcessOnMainThreadCoroutine(GLTFRoot gltf)
         {
             using (m_textureLoader)
             {
@@ -156,7 +185,7 @@ namespace UniGLTF
                 var colorSpace = TextureIO.GetColorSpace(textureType);
                 var isLinear = colorSpace == RenderTextureReadWrite.Linear;
                 yield return m_textureLoader.ProcessOnMainThread(isLinear);
-                TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
+                TextureSamplerUtil.SetSampler(texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
             }
         }
         #endregion

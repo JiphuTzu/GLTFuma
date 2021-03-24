@@ -2,12 +2,12 @@
 using UnityEngine;
 
 
-namespace UniGLTF
+namespace UMa.GLTF
 {
     public class MeshWithMaterials
     {
-        public Mesh Mesh;
-        public Material[] Materials;
-        public List<Renderer> Renderers=new List<Renderer>(); // SkinnedMeshRenderer or MeshRenderer
+        public Mesh mesh;
+        public Material[] materials;
+        public List<Renderer> renderers=new List<Renderer>(); // SkinnedMeshRenderer or MeshRenderer
     }
 }
