@@ -6,9 +6,22 @@ using UnityEngine;
 
 namespace UMa.GLTF
 {
-    public static class NodeImporter
+    public class TransformWithSkin
     {
-        public static GameObject ImportNode(GLTFNode node)
+        public Transform transform;
+        public GameObject gameObject { get { return transform.gameObject; } }
+        public int? skinIndex;
+    }
+    public interface INodeImporter
+    {
+        GameObject ImportNode(GLTFNode node);
+        TransformWithSkin BuildHierarchy(GLTFImporter context, int i);
+        void FixCoordinate(GLTFRoot gltf, List<TransformWithSkin> nodes);
+        void SetupSkinning(GLTFRoot gltf, List<TransformWithSkin> nodes, int i);
+    }
+    public class NodeImporter : INodeImporter
+    {
+        public GameObject ImportNode(GLTFNode node)
         {
             var nodeName = node.name;
             if (!string.IsNullOrEmpty(nodeName) && nodeName.Contains("/"))
@@ -23,25 +36,15 @@ namespace UMa.GLTF
             //
             if (node.translation != null && node.translation.Length > 0)
             {
-                go.transform.localPosition = new Vector3(
-                    node.translation[0],
-                    node.translation[1],
-                    node.translation[2]);
+                go.transform.localPosition = node.translation.ToVector3();
             }
             if (node.rotation != null && node.rotation.Length > 0)
             {
-                go.transform.localRotation = new Quaternion(
-                    node.rotation[0],
-                    node.rotation[1],
-                    node.rotation[2],
-                    node.rotation[3]);
+                go.transform.localRotation = node.rotation.ToQuaternion();
             }
             if (node.scale != null && node.scale.Length > 0)
             {
-                go.transform.localScale = new Vector3(
-                    node.scale[0],
-                    node.scale[1],
-                    node.scale[2]);
+                go.transform.localScale = node.scale.ToVector3();
             }
             if (node.matrix != null && node.matrix.Length > 0)
             {
@@ -53,14 +56,9 @@ namespace UMa.GLTF
             return go;
         }
 
-        public class TransformWithSkin
-        {
-            public Transform Transform;
-            public GameObject GameObject { get { return Transform.gameObject; } }
-            public int? SkinIndex;
-        }
 
-        public static TransformWithSkin BuildHierarchy(GLTFImporter context, int i)
+
+        public TransformWithSkin BuildHierarchy(GLTFImporter context, int i)
         {
             var go = context.nodes[i].gameObject;
             if (string.IsNullOrEmpty(go.name))
@@ -70,7 +68,7 @@ namespace UMa.GLTF
 
             var nodeWithSkin = new TransformWithSkin
             {
-                Transform = go.transform,
+                transform = go.transform,
             };
 
             //
@@ -81,9 +79,8 @@ namespace UMa.GLTF
             {
                 foreach (var child in node.children)
                 {
-                    context.nodes[child].transform.SetParent(context.nodes[i].transform,
-                        false // node has local transform
-                        );
+                    // node has local transform
+                    context.nodes[child].transform.SetParent(context.nodes[i].transform, false);
                 }
             }
 
@@ -110,7 +107,7 @@ namespace UMa.GLTF
 
                     if (node.skin != -1)
                     {
-                        nodeWithSkin.SkinIndex = node.skin;
+                        nodeWithSkin.skinIndex = node.skin;
                     }
 
                     renderer.sharedMesh = mesh.mesh;
@@ -127,18 +124,18 @@ namespace UMa.GLTF
         //
         // fix node's coordinate. z-back to z-forward
         //
-        public static void FixCoordinate(GLTFImporter context, List<TransformWithSkin> nodes)
+        public void FixCoordinate(GLTFRoot gltf, List<TransformWithSkin> nodes)
         {
-            var globalTransformMap = nodes.ToDictionary(x => x.Transform, x => new PosRot
+            var globalTransformMap = nodes.ToDictionary(x => x.transform, x => new PosRot
             {
-                position = x.Transform.position,
-                rotation = x.Transform.rotation,
+                position = x.transform.position,
+                rotation = x.transform.rotation,
             });
-            foreach (var x in context.gltf.rootnodes)
+            foreach (var x in gltf.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
-                var t = nodes[x].Transform;
+                var t = nodes[x].transform;
                 //t.SetParent(root.transform, false);
 
                 foreach (var transform in t.Traverse())
@@ -150,30 +147,30 @@ namespace UMa.GLTF
             }
         }
 
-        public static void SetupSkinning(GLTFImporter context, List<TransformWithSkin> nodes, int i)
+        public void SetupSkinning(GLTFRoot gltf, List<TransformWithSkin> nodes, int i)
         {
             var x = nodes[i];
-            var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
+            var skinnedMeshRenderer = x.transform.GetComponent<SkinnedMeshRenderer>();
             if (skinnedMeshRenderer != null)
             {
                 var mesh = skinnedMeshRenderer.sharedMesh;
-                if (x.SkinIndex.HasValue)
+                if (x.skinIndex.HasValue)
                 {
                     if (mesh == null) throw new Exception();
                     if (skinnedMeshRenderer == null) throw new Exception();
 
-                    if (x.SkinIndex.Value < context.gltf.skins.Count)
+                    if (x.skinIndex.Value < gltf.skins.Count)
                     {
-                        var skin = context.gltf.skins[x.SkinIndex.Value];
+                        var skin = gltf.skins[x.skinIndex.Value];
 
                         skinnedMeshRenderer.sharedMesh = null;
 
-                        var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
+                        var joints = skin.joints.Select(y => nodes[y].transform).ToArray();
                         skinnedMeshRenderer.bones = joints;
 
                         if (skin.skeleton >= 0 && skin.skeleton < nodes.Count)
                         {
-                            skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
+                            skinnedMeshRenderer.rootBone = nodes[skin.skeleton].transform;
                         }
 
                         if (skin.inverseBindMatrices != -1)
@@ -185,10 +182,8 @@ namespace UMa.GLTF
                             var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = calculatedBindPoses;
 #else
-                            var bindPoses = context.gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
-                                .Select(y => y.ReverseZ())
-                                .ToArray()
-                                ;
+                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
+                                .Select(y => y.ReverseZ()).ToArray();
                             mesh.bindposes = bindPoses;
 #endif
                         }
@@ -198,6 +193,5 @@ namespace UMa.GLTF
                 }
             }
         }
-
     }
 }

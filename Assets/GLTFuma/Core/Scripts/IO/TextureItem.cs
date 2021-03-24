@@ -30,8 +30,11 @@ namespace UMa.GLTF
         }
         private async Task<bool> StartLoad(GLTFRoot gltf,IStorage storage,Action<Texture2D> complete)
         {
+            Debug.Log("Start Load "+m_textureIndex);
              var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
+             Debug.Log("image index "+imageIndex);
             gltf.GetImageBytes(storage, imageIndex, out var name, out var url);
+            Debug.Log("image url ... "+url);
             if (string.IsNullOrEmpty(url)) return false;
             await Task.Yield();
             Debug.LogFormat("UnityWebRequest: {0}", url);

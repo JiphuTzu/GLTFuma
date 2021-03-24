@@ -241,7 +241,7 @@ namespace UMa.GLTF
             {
                 url = storage.GetPath(image.uri);
                 textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                return new ArraySegment<byte>();
+                return storage.Get(image.uri);
             }
         }
 

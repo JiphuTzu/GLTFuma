@@ -120,6 +120,18 @@ namespace UMa.GLTF
 
             return Quaternion.LookRotation(forward, upwards);
         }
+        public static Quaternion GetShortest(this Quaternion last, Quaternion rot)
+        {
+            if (Quaternion.Dot(last, rot) > 0.0)
+            {
+                return rot;
+            }
+            else
+            {
+                return new Quaternion(-rot.x, -rot.y, -rot.z, -rot.w);
+            }
+
+        }
 
         public static Vector3 ExtractPosition(this Matrix4x4 matrix)
         {
@@ -217,6 +229,14 @@ namespace UMa.GLTF
                     yield return x;
                 }
             }
+        }
+        public static Vector3 ToVector3(this float[] a)
+        {
+            return new Vector3(a[0], a[1], a[2]);
+        }
+        public static Quaternion ToQuaternion(this float[] a)
+        {
+            return new Quaternion(a[0], a[1], a[2], a[3]);
         }
 
         public static float[] ToArray(this Quaternion q)

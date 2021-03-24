@@ -283,7 +283,7 @@ namespace UMa.GLTF
         {
             if (string.IsNullOrEmpty(url)) return;
             Debug.LogFormat("UnityWebRequest: {0}", url);
-            StartLoad(complete);
+            var res = StartLoad(complete);
         }
         private async Task<bool> StartLoad(Action complete)
         {

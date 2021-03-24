@@ -7,7 +7,7 @@ namespace UMa.GLTF
     public interface IStorage
     {
         ArraySegment<Byte> Get(string url);
-
+        void Load(string url,Action<string> complete);
         /// <summary>
         /// Get original filepath if exists
         /// </summary>
@@ -33,6 +33,9 @@ namespace UMa.GLTF
         {
             return m_bytes;
         }
+        public void Load(string url,Action<string> complete){
+            complete.Invoke(url);
+        }
 
         public string GetPath(string url)
         {
@@ -57,6 +60,9 @@ namespace UMa.GLTF
                 : File.ReadAllBytes(Path.Combine(m_root, url))
                 ;
             return new ArraySegment<byte>(bytes);
+        }
+        public void Load(string url,Action<string> complete){
+            complete.Invoke(url);
         }
 
         public string GetPath(string url)

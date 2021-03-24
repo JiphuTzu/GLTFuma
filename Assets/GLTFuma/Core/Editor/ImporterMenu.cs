@@ -44,7 +44,7 @@ namespace UMa.GLTF
                 }
 
                 // import as asset
-                gltfAssetPostprocessor.ImportAsset(path, Path.GetExtension(path).ToLower(), UnityPath.FromFullpath(assetPath));
+                GLTFAssetPostprocessor.ImportAsset(path, Path.GetExtension(path).ToLower(), UnityPath.FromFullpath(assetPath));
             }
         }
     }

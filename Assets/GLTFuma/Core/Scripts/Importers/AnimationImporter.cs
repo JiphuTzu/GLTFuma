@@ -5,7 +5,11 @@ using UnityEngine;
 
 namespace UMa.GLTF
 {
-    public static class AnimationImporter
+    public interface IAnimationImporter
+    {
+        void ImportAnimation(GLTFImporter importer);
+    }
+    public class AnimationImporter : IAnimationImporter
     {
         private enum TangentMode
         {
@@ -14,7 +18,7 @@ namespace UMa.GLTF
             Cubicspline
         }
 
-        private static TangentMode GetTangentMode(string interpolation)
+        private TangentMode GetTangentMode(string interpolation)
         {
             if (interpolation == GLTFAnimationTarget.Interpolation.LINEAR.ToString())
             {
@@ -34,7 +38,7 @@ namespace UMa.GLTF
             }
         }
 
-        private static void CalculateTanget(List<Keyframe> keyframes, int current)
+        private void CalculateTanget(List<Keyframe> keyframes, int current)
         {
             int back = current - 1;
             if (back < 0)
@@ -51,21 +55,10 @@ namespace UMa.GLTF
             }
         }
 
-        public static Quaternion GetShortest(Quaternion last, Quaternion rot)
-        {
-            if (Quaternion.Dot(last, rot) > 0.0)
-            {
-                return rot;
-            }
-            else
-            {
-                return new Quaternion(-rot.x, -rot.y, -rot.z, -rot.w);
-            }
 
-        }
 
         //public delegate float[] ReverseZ(float[] current, float[] last);
-        public static void SetAnimationCurve(
+        public void SetAnimationCurve(
             AnimationClip targetClip,
             string relativePath,
             string[] propertyNames,
@@ -73,7 +66,7 @@ namespace UMa.GLTF
             float[] output,
             string interpolation,
             Type curveType,
-            Func<float[],float[],float[]> reverse)
+            Func<float[], float[], float[]> reverse)
         {
             var tangentMode = GetTangentMode(interpolation);
             // Debug.Log(relativePath+" == "+interpolation);
@@ -157,7 +150,7 @@ namespace UMa.GLTF
             }
         }
 
-        public static List<AnimationClip> ImportAnimationClip(GLTFImporter importer)
+        public List<AnimationClip> ImportAnimationClip(GLTFImporter importer)
         {
             List<AnimationClip> animasionClips = new List<AnimationClip>();
             for (int i = 0; i < importer.gltf.animations.Count; ++i)
@@ -190,7 +183,7 @@ namespace UMa.GLTF
                                 var input = importer.gltf.GetArrayFromAccessor<float>(sampler.input);
                                 var output = importer.gltf.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                AnimationImporter.SetAnimationCurve(
+                                SetAnimationCurve(
                                     clip,
                                     relativePath,
                                     new string[] { "localPosition.x", "localPosition.y", "localPosition.z" },
@@ -213,7 +206,7 @@ namespace UMa.GLTF
                                 var input = importer.gltf.GetArrayFromAccessor<float>(sampler.input);
                                 var output = importer.gltf.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                AnimationImporter.SetAnimationCurve(
+                                SetAnimationCurve(
                                     clip,
                                     relativePath,
                                     new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" },
@@ -225,7 +218,7 @@ namespace UMa.GLTF
                                     {
                                         Quaternion currentQuaternion = new Quaternion(values[0], values[1], values[2], values[3]);
                                         Quaternion lastQuaternion = new Quaternion(last[0], last[1], last[2], last[3]);
-                                        return AnimationImporter.GetShortest(lastQuaternion, currentQuaternion.ReverseZ()).ToArray();
+                                        return lastQuaternion.GetShortest(currentQuaternion.ReverseZ()).ToArray();
                                     }
                                 );
 
@@ -239,7 +232,7 @@ namespace UMa.GLTF
                                 var input = importer.gltf.GetArrayFromAccessor<float>(sampler.input);
                                 var output = importer.gltf.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                AnimationImporter.SetAnimationCurve(
+                                SetAnimationCurve(
                                     clip,
                                     relativePath,
                                     new string[] { "localScale.x", "localScale.y", "localScale.z" },
@@ -279,7 +272,7 @@ namespace UMa.GLTF
                                 var sampler = animation.samplers[channel.sampler];
                                 var input = importer.gltf.GetArrayFromAccessor<float>(sampler.input);
                                 var output = importer.gltf.GetArrayFromAccessor<float>(sampler.output);
-                                AnimationImporter.SetAnimationCurve(
+                                SetAnimationCurve(
                                     clip,
                                     relativePath,
                                     keyNames,
@@ -295,7 +288,7 @@ namespace UMa.GLTF
                                         }
                                         return values;
                                     });
-                                
+
                             }
                             break;
 
@@ -310,21 +303,21 @@ namespace UMa.GLTF
             return animasionClips;
         }
 
-        public static void ImportAnimation(GLTFImporter importer)
+        public void ImportAnimation(GLTFImporter importer)
         {
-            Debug.Log("import animations "+importer.gltf.animations?.Count);
+            Debug.Log("import animations " + importer.gltf.animations?.Count);
             // animation
             if (importer.gltf.animations != null && importer.gltf.animations.Any())
             {
                 var animation = importer.root.AddComponent<Animation>();
-                importer.AnimationClips = ImportAnimationClip(importer);
-                foreach (var clip in importer.AnimationClips)
+                importer.animationClips = ImportAnimationClip(importer);
+                foreach (var clip in importer.animationClips)
                 {
                     animation.AddClip(clip, clip.name);
                 }
-                if (importer.AnimationClips.Count > 0)
+                if (importer.animationClips.Count > 0)
                 {
-                    animation.clip = importer.AnimationClips.First();
+                    animation.clip = importer.animationClips.First();
                 }
             }
         }

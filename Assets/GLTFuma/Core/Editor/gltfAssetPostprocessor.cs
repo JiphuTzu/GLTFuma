@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
 
 namespace UMa.GLTF
 {
-    public class gltfAssetPostprocessor : AssetPostprocessor
+    public class GLTFAssetPostprocessor : AssetPostprocessor
     {
         static void OnPostprocessAllAssets(string[] importedAssets,
             string[] deletedAssets,
@@ -37,7 +39,6 @@ namespace UMa.GLTF
                 Debug.LogWarningFormat("out of asset path: {0}", prefabPath);
                 return;
             }
-
             var context = new GLTFImporter();
             context.Parse(src);
 
@@ -54,26 +55,25 @@ namespace UMa.GLTF
                     //
                     // After textures imported(To ensure TextureImporter be accessible).
                     //
-                    try
-                    {
-                        // context.Load();
-                        // context.SaveAsAsset(prefabPath);
-                        // context.EditorDestroyRoot();
-                    }
-                    catch (UniGLTFNotSupportedException ex)
-                    {
-                        Debug.LogWarningFormat("{0}: {1}",
-                            src,
-                            ex.Message
-                            );
-                        context.EditorDestroyRootAndAssets();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogErrorFormat("import error: {0}", src);
-                        Debug.LogErrorFormat("{0}", ex);
-                        context.EditorDestroyRootAndAssets();
-                    }
+                    // try
+                    // {
+
+                            var n = context.Load(context.storage,p=>Debug.Log(p));
+                            
+                            //context.SaveAsAsset(prefabPath);
+                        //context.EditorDestroyRoot();
+                    // }
+                    // catch (UniGLTFNotSupportedException ex)
+                    // {
+                    //     Debug.LogWarningFormat($"{src}: {ex.Message}");
+                    //     context.EditorDestroyRootAndAssets();
+                    // }
+                    // catch (Exception ex)
+                    // {
+                    //     Debug.LogErrorFormat("import error: {0}", src);
+                    //     Debug.LogErrorFormat("{0}", ex);
+                    //     context.EditorDestroyRootAndAssets();
+                    // }
                 };
         }
     }

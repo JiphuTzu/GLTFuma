@@ -5,6 +5,7 @@ using UnityEngine;
 using System.IO;
 using System.Text;
 using System.Collections;
+using System.Threading.Tasks;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -99,6 +100,9 @@ namespace UMa.GLTF
                 _materialImporter = value;
             }
         }
+        private IMeshImporter _meshImporter;
+        private INodeImporter _nodeImporter;
+        private IAnimationImporter _animationImporter;
 
         public GLTFImporter(IShaderStore shaderStore)
         {
@@ -109,8 +113,16 @@ namespace UMa.GLTF
         {
             _materialImporter = materialImporter;
         }
+        public GLTFImporter(IShaderStore shaderStore, IMeshImporter meshImporter, IMaterialImporter materialImporter, INodeImporter nodeImporter, IAnimationImporter animationImporter)
+        {
+            _shaderStore = shaderStore ?? new ShaderStore(this);
+            _meshImporter = meshImporter ?? new MeshImporter();
+            _materialImporter = materialImporter ?? new MaterialImporter(_shaderStore, this);
+            _nodeImporter = nodeImporter ?? new NodeImporter();
+            _animationImporter = animationImporter ?? new AnimationImporter();
+        }
 
-        public GLTFImporter() { }
+        public GLTFImporter() : this(null, null, null, null, null) { }
 
         #region Source
 
@@ -365,7 +377,7 @@ namespace UMa.GLTF
             }
         }
 
-        public IEnumerator Load(IStorage storage, Action<float> progress)
+        public async Task Load(IStorage storage, Action<float> progress)
         {
             this.storage = storage;
             if (_textures.Count == 0)
@@ -374,7 +386,7 @@ namespace UMa.GLTF
                 // runtime
                 //
                 CreateTextureItems();
-                yield return null;
+                await Task.Yield();
                 progress.Invoke(0.1f);
             }
             else
@@ -388,7 +400,7 @@ namespace UMa.GLTF
             // yield return TexturesProcessOnMainThread();
             // progress.Invoke(0.2f);
             Debug.Log("start load material");
-            yield return LoadMaterials();
+            await LoadMaterials();
             progress.Invoke(0.3f);
             // if (gltf.meshes.SelectMany(x => x.primitives)
             //     .Any(x => x.extensions.KHR_draco_mesh_compression != null))
@@ -397,16 +409,18 @@ namespace UMa.GLTF
             // }
 
             // meshes
-            var meshImporter = new MeshImporter();
+            //var meshImporter = new MeshImporter();
             for (int i = 0; i < gltf.meshes.Count; ++i)
             {
                 var index = i;
                 using (MeasureTime("ReadMesh"))
                 {
                     //Debug.Log("read mesh ... " + index);
-                    var x = meshImporter.ReadMesh(this, index);
-                    yield return null;
-                    var meshWithMaterials = meshImporter.BuildMesh(this, x);
+                    // var x = meshImporter.ReadMesh(this, index);
+                    // var meshWithMaterials = meshImporter.BuildMesh(this, x);
+                    var meshWithMaterials = _meshImporter.BuildMesh(gltf, index);
+                    await Task.Yield();
+                    meshWithMaterials.materials = meshWithMaterials.materialIndices.Select(x => GetMaterial(x)).ToArray();
 
                     var mesh = meshWithMaterials.mesh;
 
@@ -420,25 +434,27 @@ namespace UMa.GLTF
                     {
                         mesh.name = string.Format("{0}({1})", originalName, j);
                     }
-                    yield return null;
+                    await Task.Yield();
                     meshes.Add(meshWithMaterials);
-                    yield return null;
+                    await Task.Yield();
                     progress.Invoke(0.3f + 0.5f * (i + 1) / gltf.meshes.Count);
                 }
             }
 
-            yield return LoadNodes();
+            await LoadNodes();
             progress.Invoke(0.9f);
-            yield return BuildHierarchy();
+            Debug.Log("start BuildHierarchy ");
+            await BuildHierarchy();
 
             using (MeasureTime("AnimationImporter"))
             {
                 Debug.Log("animators....");
-                AnimationImporter.ImportAnimation(this);
+                _animationImporter.ImportAnimation(this);
             }
 
             OnLoadModel();
             progress.Invoke(1);
+            await Task.Yield();
             if (showSpeedLog)
             {
                 Debug.Log(GetSpeedLog());
@@ -473,7 +489,7 @@ namespace UMa.GLTF
             }
         }
 
-        private IEnumerator LoadMaterials()
+        private async Task LoadMaterials()
         {
             using (MeasureTime("LoadMaterials"))
             {
@@ -489,20 +505,22 @@ namespace UMa.GLTF
                     }
                 }
             }
-            yield return null;
+            await Task.Yield();
         }
 
         private IEnumerator LoadMeshes()
         {
-            var meshImporter = new MeshImporter();
+            //var meshImporter = new MeshImporter();
             for (int i = 0; i < gltf.meshes.Count; ++i)
             {
-                var meshContext = meshImporter.ReadMesh(this, i);
-                var meshWithMaterials = meshImporter.BuildMesh(this, meshContext);
+                // var meshContext = meshImporter.ReadMesh(this, i);
+                // var meshWithMaterials = meshImporter.BuildMesh(this, meshContext);
+                var meshWithMaterials = _meshImporter.BuildMesh(gltf, i);
+                meshWithMaterials.materials = meshWithMaterials.materialIndices.Select(x => GetMaterial(x)).ToArray();
                 var mesh = meshWithMaterials.mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
-                    mesh.name = string.Format("UniGLTF import#{0}", i);
+                    mesh.name = string.Format("GLTFuma import#{0}", i);
                 }
                 meshes.Add(meshWithMaterials);
 
@@ -510,47 +528,48 @@ namespace UMa.GLTF
             }
         }
 
-        private IEnumerator LoadNodes()
+        private async Task LoadNodes()
         {
             using (MeasureTime("LoadNodes"))
             {
                 foreach (var x in gltf.nodes)
                 {
-                    nodes.Add(NodeImporter.ImportNode(x).transform);
+                    nodes.Add(_nodeImporter.ImportNode(x).transform);
                 }
             }
 
-            yield return null;
+            await Task.Yield();
         }
 
-        private IEnumerator BuildHierarchy()
+        private async Task BuildHierarchy()
         {
+            Debug.Log("BuildHierarchy");
             using (MeasureTime("BuildHierarchy"))
             {
-                var nodes = new List<NodeImporter.TransformWithSkin>();
+                var nodes = new List<TransformWithSkin>();
                 for (int i = 0; i < this.nodes.Count; ++i)
                 {
-                    nodes.Add(NodeImporter.BuildHierarchy(this, i));
+                    nodes.Add(_nodeImporter.BuildHierarchy(this, i));
                 }
 
-                NodeImporter.FixCoordinate(this, nodes);
+                _nodeImporter.FixCoordinate(gltf, nodes);
 
                 // skinning
                 for (int i = 0; i < nodes.Count; ++i)
                 {
-                    NodeImporter.SetupSkinning(this, nodes, i);
+                    _nodeImporter.SetupSkinning(gltf, nodes, i);
                 }
 
                 // connect root
                 root = new GameObject("_root_");
                 foreach (var x in gltf.rootnodes)
                 {
-                    var t = nodes[x].Transform;
+                    var t = nodes[x].transform;
                     t.SetParent(root.transform, false);
                 }
             }
-
-            yield return null;
+            Debug.Log("root .... "+root);
+            await Task.Yield();
         }
 
         #region Imported
@@ -637,7 +656,7 @@ namespace UMa.GLTF
             }
         }
 
-        public List<AnimationClip> AnimationClips = new List<AnimationClip>();
+        public List<AnimationClip> animationClips = new List<AnimationClip>();
         #endregion
 
         protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
@@ -653,7 +672,7 @@ namespace UMa.GLTF
             foreach (var x in textures) { yield return x; }
             foreach (var x in _materials) { yield return x; }
             foreach (var x in meshes) { yield return x.mesh; }
-            foreach (var x in AnimationClips) { yield return x; }
+            foreach (var x in animationClips) { yield return x; }
         }
 
 #if UNITY_EDITOR
