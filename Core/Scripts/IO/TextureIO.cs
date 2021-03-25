@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -50,7 +49,7 @@ namespace UMa.GLTF
         {
             foreach (var material in glTf.materials)
             {
-                var textureInfo = material.GetTextures().FirstOrDefault(x => (x!=null) && x.index == textureIndex);
+                var textureInfo = material.GetTextures().FirstOrDefault(x => (x != null) && x.index == textureIndex);
                 if (textureInfo != null)
                 {
                     return textureInfo.TextreType;
@@ -110,52 +109,54 @@ namespace UMa.GLTF
         }
 
 
-        struct BytesWithMime
+        public struct BytesWithMime
         {
-            public Byte[] Bytes;
-            public string Mime;
+            public byte[] bytes;
+            public string mime;
         }
 
-        static BytesWithMime GetBytesWithMime(Texture texture, GLTFTextureType textureType)
+        public static BytesWithMime GetBytesWithMime(Texture texture, GLTFTextureType textureType)
         {
 #if UNITY_EDITOR
             var path = UnityPath.FromAsset(texture);
-            if (path.IsUnderAssetsFolder)
+            if (path.isUnderAssetsFolder)
             {
-                if (path.Extension == ".png")
+                if (path.extension == ".png")
                 {
                     return new BytesWithMime
                     {
-                        Bytes = System.IO.File.ReadAllBytes(path.FullPath),
-                        Mime = "image/png",
+                        bytes = System.IO.File.ReadAllBytes(path.fullPath),
+                        mime = "image/png"
                     };
-                }                    
+                }
             }
 #endif
 
             return new BytesWithMime
             {
-                Bytes = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), null).EncodeToPNG(),
-                Mime = "image/png",
+                bytes = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), null).EncodeToPNG(),
+                mime = "image/png"
             };
         }
 
         public static int ExportTexture(GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType)
         {
-            var bytesWithMime = GetBytesWithMime(texture, textureType); ;
+            //var bytesWithMime = GetBytesWithMime(texture, textureType); ;
 
             // add view
-            var view = gltf.buffers[bufferIndex].Append(bytesWithMime.Bytes, GLTFBufferTarget.NONE);
-            var viewIndex = gltf.AddBufferView(view);
+            //var view = gltf.buffers[bufferIndex].Append(bytesWithMime.bytes, GLTFBufferTarget.NONE);
+            //var viewIndex = gltf.AddBufferView(view);
 
             // add image
             var imageIndex = gltf.images.Count;
-            gltf.images.Add(new GLTFImage
+            var image = new GLTFImage
             {
                 name = texture.name,
-                bufferView = viewIndex,
-                mimeType = bytesWithMime.Mime,
-            });
+                mimeType = "image/png"//bytesWithMime.mime,
+            };
+            //bufferView = viewIndex,
+            image.uri = texture.name.ToLower() + image.GetExt().ToLower();
+            gltf.images.Add(image);
 
             // add sampler
             var samplerIndex = gltf.samplers.Count;

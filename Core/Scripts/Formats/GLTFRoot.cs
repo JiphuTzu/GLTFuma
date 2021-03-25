@@ -11,7 +11,7 @@ namespace UMa.GLTF
     {
         [JsonSchema(Required = true)]
         public GLTFAsset asset = new GLTFAsset();
-         [JsonSchema(Dependencies = new string[] { "scenes" }, Minimum = 0)]
+        [JsonSchema(Dependencies = new string[] { "scenes" }, Minimum = 0)]
         public int scene;
 
         [JsonSchema(MinItems = 1)]
@@ -296,7 +296,7 @@ namespace UMa.GLTF
         [JsonSchema(MinItems = 1)]
         public List<GLTFSkin> skins = new List<GLTFSkin>();
 
-       
+
         public int[] rootnodes
         {
             get
@@ -349,17 +349,20 @@ namespace UMa.GLTF
             }
             if (bufferViews.Any())
             {
-                f.Key("bufferViews"); f.GLTFValue(bufferViews);
+                f.Key("bufferViews");
+                f.GLTFValue(bufferViews);
             }
             if (accessors.Any())
             {
-                f.Key("accessors"); f.GLTFValue(accessors);
+                f.Key("accessors");
+                f.GLTFValue(accessors);
             }
 
             // materials
             if (images.Any())
             {
-                f.Key("images"); f.GLTFValue(images);
+                f.Key("images");
+                f.GLTFValue(images);
                 if (samplers.Count == 0)
                 {
                     samplers.Add(new GLTFTextureSampler());
@@ -368,16 +371,19 @@ namespace UMa.GLTF
 
             if (samplers.Any())
             {
-                f.Key("samplers"); f.GLTFValue(samplers);
+                f.Key("samplers");
+                f.GLTFValue(samplers);
             }
 
             if (textures.Any())
             {
-                f.Key("textures"); f.GLTFValue(textures);
+                f.Key("textures");
+                f.GLTFValue(textures);
             }
             if (materials.Any())
             {
-                f.Key("materials"); f.GLTFValue(materials);
+                f.Key("materials");
+                f.GLTFValue(materials);
             }
 
             // meshes
@@ -407,7 +413,8 @@ namespace UMa.GLTF
             // animations
             if (animations.Any())
             {
-                f.Key("animations"); f.GLTFValue(animations);
+                f.Key("animations");
+                f.GLTFValue(animations);
             }
         }
 
@@ -497,6 +504,10 @@ namespace UMa.GLTF
             RemoveUnusedExtensions(json);
 
             return json.Join(buffers[0].GetBytes());
+        }
+        public byte[] ToBinary()
+        {
+            return buffers[0].GetBytes().ToArray();
         }
     }
 }

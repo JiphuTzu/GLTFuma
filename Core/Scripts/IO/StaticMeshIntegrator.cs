@@ -159,7 +159,7 @@ namespace UMa.GLTF
                 {
                     return;
                 }
-                assetPath = UnityPath.FromFullpath(path).Value;
+                assetPath = UnityPath.FromFullpath(path).value;
             }
 
             assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);

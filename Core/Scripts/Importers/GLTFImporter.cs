@@ -355,7 +355,7 @@ namespace UMa.GLTF
 
                 TextureItem item = null;
 #if UNITY_EDITOR
-                if (imageBaseDir.IsUnderAssetsFolder
+                if (imageBaseDir.isUnderAssetsFolder
                     && !string.IsNullOrEmpty(image.uri)
                     && !image.uri.StartsWith("data:")
                     )
@@ -659,7 +659,7 @@ namespace UMa.GLTF
         public List<AnimationClip> animationClips = new List<AnimationClip>();
         #endregion
 
-        protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
+        public virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
         {
             HashSet<Texture2D> textures = new HashSet<Texture2D>();
             foreach (var x in _textures.SelectMany(y => y.GetTexturesForSaveAssets()))
@@ -675,163 +675,7 @@ namespace UMa.GLTF
             foreach (var x in animationClips) { yield return x; }
         }
 
-#if UNITY_EDITOR
-        #region Assets
-        public bool MeshAsSubAsset = false;
 
-        protected virtual UnityPath GetAssetPath(UnityPath prefabPath, UnityEngine.Object o)
-        {
-            if (o is Material)
-            {
-                var materialDir = prefabPath.GetAssetFolder(".Materials");
-                var materialPath = materialDir.Child(o.name.EscapeFilePath() + ".asset");
-                return materialPath;
-            }
-            else if (o is Texture2D)
-            {
-                var textureDir = prefabPath.GetAssetFolder(".Textures");
-                var texturePath = textureDir.Child(o.name.EscapeFilePath() + ".asset");
-                return texturePath;
-            }
-            else if (o is Mesh && !MeshAsSubAsset)
-            {
-                var meshDir = prefabPath.GetAssetFolder(".Meshes");
-                var meshPath = meshDir.Child(o.name.EscapeFilePath() + ".asset");
-                return meshPath;
-            }
-            else
-            {
-                return default(UnityPath);
-            }
-        }
-
-        public virtual bool IsOverwrite(UnityEngine.Object o)
-        {
-            if (o is Material)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public void SaveAsAsset(UnityPath prefabPath)
-        {
-            ShowMeshes();
-
-            //var prefabPath = PrefabPath;
-            if (prefabPath.IsFileExists)
-            {
-                // clear SubAssets
-                foreach (var x in prefabPath.GetSubAssets().Where(x => !(x is GameObject) && !(x is Component)))
-                {
-                    GameObject.DestroyImmediate(x, true);
-                }
-            }
-
-            //
-            // save sub assets
-            //
-            var paths = new List<UnityPath>(){
-                prefabPath
-            };
-            foreach (var o in ObjectsForSubAsset())
-            {
-                if (o == null) continue;
-
-                var assetPath = GetAssetPath(prefabPath, o);
-                if (!assetPath.IsNull)
-                {
-                    if (assetPath.IsFileExists)
-                    {
-                        if (!IsOverwrite(o))
-                        {
-                            // 上書きしない
-                            Debug.LogWarningFormat("already exists. skip {0}", assetPath);
-                            continue;
-                        }
-                    }
-                    assetPath.Parent.EnsureFolder();
-                    assetPath.CreateAsset(o);
-                    paths.Add(assetPath);
-                }
-                else
-                {
-                    // save as subasset
-                    prefabPath.AddObjectToAsset(o);
-                }
-            }
-
-            // Create or upate Main Asset
-            if (prefabPath.IsFileExists)
-            {
-                Debug.LogFormat("replace prefab: {0}", prefabPath);
-                var prefab = prefabPath.LoadAsset<GameObject>();
-                PrefabUtility.ReplacePrefab(root, prefab, ReplacePrefabOptions.ReplaceNameBased);
-            }
-            else
-            {
-                Debug.LogFormat("create prefab: {0}", prefabPath);
-                PrefabUtility.CreatePrefab(prefabPath.Value, root);
-            }
-            foreach (var x in paths)
-            {
-                x.ImportAsset();
-            }
-        }
-
-        /// <summary>
-        /// Extract images from glb or gltf out of Assets folder.
-        /// </summary>
-        /// <param name="prefabPath"></param>
-        public void ExtranctImages(UnityPath prefabPath)
-        {
-            var prefabParentDir = prefabPath.Parent;
-
-            // glb buffer
-            var folder = prefabPath.GetAssetFolder(".Textures");
-
-            //
-            // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
-            //
-            int created = 0;
-            //for (int i = 0; i < GLTF.textures.Count; ++i)
-            for (int i = 0; i < gltf.images.Count; ++i)
-            {
-                folder.EnsureFolder();
-
-                //var x = GLTF.textures[i];
-                var image = gltf.images[i];
-                var src = storage.GetPath(image.uri);
-                if (UnityPath.FromFullpath(src).IsUnderAssetsFolder)
-                {
-                    // asset is exists.
-                }
-                else
-                {
-                    string textureName;
-                    var byteSegment = gltf.GetImageBytes(storage, i, out textureName, out var url);
-
-                    // path
-                    var dst = folder.Child(textureName + image.GetExt());
-                    File.WriteAllBytes(dst.FullPath, byteSegment.ToArray());
-                    dst.ImportAsset();
-
-                    // make relative path from PrefabParentDir
-                    image.uri = dst.Value.Substring(prefabParentDir.Value.Length + 1);
-                    ++created;
-                }
-            }
-
-            if (created > 0)
-            {
-                AssetDatabase.Refresh();
-            }
-
-            CreateTextureItems(prefabParentDir);
-        }
-        #endregion
-#endif
 
         /// <summary>
         /// This function is used for clean up after create assets.

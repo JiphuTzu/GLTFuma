@@ -1,89 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 namespace UMa.GLTF
 {
     public class GLTFExporter : IDisposable
     {
+        public GLTFRoot gltf;
 
-#if UNITY_EDITOR
-        [MenuItem("GLTFuma/Export", true, 1)]
-        private static bool ExportValidate()
-        {
-            return Selection.activeObject != null && Selection.activeObject is GameObject;
-        }
-
-        [MenuItem("GLTFuma/Export", false, 1)]
-        private static void ExportFromMenu()
-        {
-            var go = Selection.activeObject as GameObject;
-            var path = EditorUtility.SaveFilePanel(
-                    "Save glb",
-                    "",
-                    go.name + ".glb",
-                    "glb");
-            if (string.IsNullOrEmpty(path))
-            {
-                return;
-            }
-
-            var gltf = new GLTFRoot();
-            using (var exporter = new GLTFExporter(gltf))
-            {
-                exporter.Prepare(go);
-                exporter.Export();
-            }
-            var bytes = gltf.ToGlbBytes();
-            File.WriteAllBytes(path, bytes);
-
-            if (path.StartsWithUnityAssetPath())
-            {
-                AssetDatabase.ImportAsset(path.ToUnityRelativePath());
-                AssetDatabase.Refresh();
-            }
-        }
-#endif
-
-        GLTFRoot glTF;
-
-        public bool UseSparseAccessorForBlendShape
+        public bool useSparseAccessorForBlendShape
         {
             get;
             set;
         }
 
-        public GameObject Copy
+        public GameObject copy
         {
             get;
             protected set;
         }
 
-        public List<Mesh> Meshes
+        public List<Mesh> meshes
         {
             get;
             private set;
         }
 
-        public List<Transform> Nodes
+        public List<Transform> nodes
         {
             get;
             private set;
         }
 
-        public List<Material> Materials
+        public List<Material> materials
         {
             get;
             private set;
         }
 
-        public TextureExportManager TextureManager;
+        public TextureExportManager textureManager;
 
         protected virtual IMaterialExporter CreateMaterialExporter()
         {
@@ -93,7 +50,7 @@ namespace UMa.GLTF
         /// <summary>
         /// このエクスポーターがサポートするExtension
         /// </summary>
-        protected virtual IEnumerable<string> ExtensionUsed
+        protected virtual IEnumerable<string> extensionUsed
         {
             get
             {
@@ -103,49 +60,49 @@ namespace UMa.GLTF
 
         public GLTFExporter(GLTFRoot gltf)
         {
-            glTF = gltf;
+            this.gltf = gltf;
 
-            glTF.extensionsUsed.AddRange(ExtensionUsed);
+            this.gltf.extensionsUsed.AddRange(extensionUsed);
 
-            glTF.asset = new GLTFAsset
+            this.gltf.asset = new GLTFAsset
             {
-                generator = "UMAGLTF",
+                generator = "GLTFumaExporter",
                 version = "2.0",
             };
         }
 
-        public static GLTFRoot Export(GameObject go)
-        {
-            var gltf = new GLTFRoot();
-            using (var exporter = new GLTFExporter(gltf))
-            {
-                exporter.Prepare(go);
-                exporter.Export();
-            }
-            return gltf;
-        }
+        // public static GLTFRoot Export(GameObject go)
+        // {
+        //     var gltf = new GLTFRoot();
+        //     using (var exporter = new GLTFExporter(gltf))
+        //     {
+        //         exporter.Prepare(go);
+        //         exporter.Export();
+        //     }
+        //     return gltf;
+        // }
 
         public virtual void Prepare(GameObject go)
         {
             // コピーを作って、Z軸を反転することで左手系を右手系に変換する
-            Copy = GameObject.Instantiate(go);
-            Copy.transform.ReverseZRecursive();
+            copy = GameObject.Instantiate(go);
+            copy.transform.ReverseZRecursive();
         }
 
         public void Export()
         {
-            FromGameObject(glTF, Copy, UseSparseAccessorForBlendShape);
+            FromGameObject(gltf, copy, useSparseAccessorForBlendShape);
         }
 
         public void Dispose()
         {
             if (Application.isEditor)
             {
-                GameObject.DestroyImmediate(Copy);
+                GameObject.DestroyImmediate(copy);
             }
             else
             {
-                GameObject.Destroy(Copy);
+                GameObject.Destroy(copy);
             }
         }
 
@@ -196,42 +153,42 @@ namespace UMa.GLTF
             try
             {
 
-                Nodes = go.transform.Traverse()
+                nodes = go.transform.Traverse()
                     .Skip(1) // exclude root object for the symmetry with the importer
                     .ToList();
 
                 #region Materials and Textures
-                Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-                var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
+                materials = nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
+                var unityTextures = materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
-                TextureManager = new TextureExportManager(unityTextures.Select(x => x.Texture));
+                textureManager = new TextureExportManager(unityTextures);
 
                 var materialExporter = CreateMaterialExporter();
-                gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, TextureManager)).ToList();
-
+                gltf.materials = materials.Select(x => materialExporter.ExportMaterial(x, textureManager)).ToList();
+                Debug.Log("image count = "+unityTextures.Count);
                 for (int i = 0; i < unityTextures.Count; ++i)
                 {
                     var unityTexture = unityTextures[i];
-                    TextureIO.ExportTexture(gltf, bufferIndex, TextureManager.GetExportTexture(i), unityTexture.TextureType);
+                    TextureIO.ExportTexture(gltf, bufferIndex, textureManager.GetExportTexture(i), unityTexture.TextureType);
                 }
                 #endregion
 
 
                 #region Meshes
-                var unityMeshes = Nodes
+                var unityMeshes = nodes
                     .Select(x => new MeshWithRenderer
                     {
-                        Mesh = x.GetSharedMesh(),
-                        Rendererer = x.GetComponent<Renderer>(),
+                        mesh = x.GetSharedMesh(),
+                        rendererer = x.GetComponent<Renderer>(),
                     })
                     .Where(x =>
                     {
-                        if (x.Mesh == null)
+                        if (x.mesh == null)
                         {
                             return false;
                         }
-                        if (x.Rendererer.sharedMaterials == null
-                        || x.Rendererer.sharedMaterials.Length == 0)
+                        if (x.rendererer.sharedMaterials == null
+                        || x.rendererer.sharedMaterials.Length == 0)
                         {
                             return false;
                         }
@@ -239,23 +196,23 @@ namespace UMa.GLTF
                         return true;
                     })
                     .ToList();
-                MeshExporter.ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
-                Meshes = unityMeshes.Select(x => x.Mesh).ToList();
+                MeshExporter.ExportMeshes(gltf, bufferIndex, unityMeshes, materials, useSparseAccessorForMorphTarget);
+                meshes = unityMeshes.Select(x => x.mesh).ToList();
                 #endregion
 
                 #region Skins
-                var unitySkins = Nodes
+                var unitySkins = nodes
                     .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x =>
                         x != null
                         && x.bones != null
                         && x.bones.Length > 0)
                     .ToList();
-                gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
+                gltf.nodes = nodes.Select(x => ExportNode(x, nodes, unityMeshes.Select(y => y.mesh).ToList(), unitySkins)).ToList();
                 gltf.scenes = new List<GLTFScene>
                 {
                     new GLTFScene
                     {
-                        nodes = go.transform.GetChildren().Select(x => Nodes.IndexOf(x)).ToArray(),
+                        nodes = go.transform.GetChildren().Select(x => nodes.IndexOf(x)).ToArray(),
                     }
                 };
 
@@ -267,15 +224,15 @@ namespace UMa.GLTF
                     var skin = new GLTFSkin
                     {
                         inverseBindMatrices = accessor,
-                        joints = x.bones.Select(y => Nodes.IndexOf(y)).ToArray(),
-                        skeleton = Nodes.IndexOf(x.rootBone),
+                        joints = x.bones.Select(y => nodes.IndexOf(y)).ToArray(),
+                        skeleton = nodes.IndexOf(x.rootBone),
                     };
                     var skinIndex = gltf.skins.Count;
                     gltf.skins.Add(skin);
 
-                    foreach (var z in Nodes.Where(y => y.HasComponent(x)))
+                    foreach (var z in nodes.Where(y => y.HasComponent(x)))
                     {
-                        var nodeIndex = Nodes.IndexOf(z);
+                        var nodeIndex = nodes.IndexOf(z);
                         var node = gltf.nodes[nodeIndex];
                         node.skin = skinIndex;
                     }
@@ -301,7 +258,7 @@ namespace UMa.GLTF
                 {
                     foreach (AnimationClip clip in clips)
                     {
-                        var animationWithCurve = AnimationExporter.Export(clip, go.transform, Nodes);
+                        var animationWithCurve = AnimationExporter.Export(clip, go.transform, nodes);
 
                         foreach (var kv in animationWithCurve.samplers)
                         {

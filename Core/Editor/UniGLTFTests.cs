@@ -118,13 +118,13 @@ namespace UMa.GLTF
         public void UnityPathTest()
         {
             var root = UnityPath.FromUnityPath(".");
-            Assert.IsFalse(root.IsNull);
-            Assert.IsFalse(root.IsUnderAssetsFolder);
+            Assert.IsFalse(root.isNull);
+            Assert.IsFalse(root.isUnderAssetsFolder);
             Assert.AreEqual(UnityPath.FromUnityPath("."), root);
 
             var assets = UnityPath.FromUnityPath("Assets");
-            Assert.IsFalse(assets.IsNull);
-            Assert.IsTrue(assets.IsUnderAssetsFolder);
+            Assert.IsFalse(assets.isNull);
+            Assert.IsTrue(assets.isUnderAssetsFolder);
 
             var rootChild = root.Child("Assets");
             Assert.AreEqual(assets, rootChild);

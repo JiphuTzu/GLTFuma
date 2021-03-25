@@ -122,10 +122,9 @@ namespace UMa.GLTF
                 animation = new GLTFAnimation(),
             };
 
-#if UNITY_5_6_OR_NEWER
             List<AnimationCurveData> curveDatas = new List<AnimationCurveData>();
-
-            foreach (var binding in AnimationUtility.GetCurveBindings(clip))
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            foreach (var binding in bindings)
             {
                 var curve = AnimationUtility.GetEditorCurve(clip, binding);
 
@@ -213,7 +212,6 @@ namespace UMa.GLTF
                     keyframeIndex++;
                 }
             }
-#endif
 
             return animation;
         }

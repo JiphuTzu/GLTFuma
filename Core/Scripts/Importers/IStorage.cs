@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-
+using UnityEngine;
 
 namespace UMa.GLTF
 {
@@ -54,6 +54,7 @@ namespace UMa.GLTF
 
         public ArraySegment<byte> Get(string url)
         {
+            Debug.Log(m_root+"---> "+url);
             var bytes =
                 (url.StartsWith("data:"))
                 ? url.ReadEmbeded()
