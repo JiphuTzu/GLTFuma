@@ -7,8 +7,8 @@ namespace UMa.GLTF
 {
     public struct MeshWithRenderer
     {
-        public Mesh Mesh;
-        public Renderer Rendererer;
+        public Mesh mesh;
+        public Renderer rendererer;
     }
 
     public static class MeshExporter
@@ -231,11 +231,11 @@ namespace UMa.GLTF
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
                 var x = unityMeshes[i];
-                var mesh = x.Mesh;
-                var materials = x.Rendererer.sharedMaterials;
+                var mesh = x.mesh;
+                var materials = x.rendererer.sharedMaterials;
 
                 var gltfMesh = ExportPrimitives(gltf, bufferIndex,
-                    x.Rendererer.name,
+                    x.rendererer.name,
                     mesh, materials, unityMaterials);
 
                 for (int j = 0; j < mesh.blendShapeCount; ++j)

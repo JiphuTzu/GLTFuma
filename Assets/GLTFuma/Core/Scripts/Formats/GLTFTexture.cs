@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using UniJSON;
+using UnityEngine;
 
 namespace UMa.GLTF
 {
@@ -87,13 +88,13 @@ namespace UMa.GLTF
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            f.KeyValue(() => name);
             if (!string.IsNullOrEmpty(uri))
             {
                 f.KeyValue(() => uri);
             }
             else
             {
+                f.KeyValue(() => name);
                 f.KeyValue(() => bufferView);
                 f.KeyValue(() => mimeType);
             }

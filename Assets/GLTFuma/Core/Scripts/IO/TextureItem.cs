@@ -26,7 +26,7 @@ namespace UMa.GLTF
             Debug.Log("TextureItem Load ");
             //m_textureLoader.Load(complete);
            
-            StartLoad(gltf,storage,complete);
+            var load = StartLoad(gltf,storage,complete);
         }
         private async Task<bool> StartLoad(GLTFRoot gltf,IStorage storage,Action<Texture2D> complete)
         {

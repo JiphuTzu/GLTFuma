@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
 
 namespace UMa.GLTF
 {
@@ -13,7 +11,7 @@ namespace UMa.GLTF
         {
             get { return m_textures; }
         }
-
+        public List<TextureIO.TextureExportItem> unityTextures;
         List<Texture> m_exportTextures;
         public Texture GetExportTexture(int index)
         {
@@ -31,15 +29,16 @@ namespace UMa.GLTF
             return m_textures[index];
         }
 
-        public TextureExportManager(IEnumerable<Texture> textures)
+        public TextureExportManager(List<TextureIO.TextureExportItem> unityTextures)
         {
+            this.unityTextures = unityTextures;
             /*
             if (textures == null)
             {
                 throw new System.ArgumentNullException();
             }
 			*/
-            m_textures = textures.ToList();
+            m_textures = unityTextures.Select(x => x.Texture).ToList();
             m_exportTextures = new List<Texture>(Enumerable.Repeat<Texture>(null, m_textures.Count));
         }
 

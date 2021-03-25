@@ -7,11 +7,11 @@ namespace UMa.GLTF
     [Serializable]
     public class GLTFBuffer : JsonSerializableBase
     {
-        IBytesBuffer Storage;
+        private IBytesBuffer _storage;
 
         public void OpenStorage(IStorage storage)
         {
-            Storage = new ArraySegmentByteBuffer(storage.Get(uri));
+            _storage = new ArraySegmentByteBuffer(storage.Get(uri));
             /*
             if (string.IsNullOrEmpty(uri))
             {
@@ -26,7 +26,7 @@ namespace UMa.GLTF
 
         public GLTFBuffer(IBytesBuffer storage)
         {
-            Storage = storage;
+            _storage = storage;
         }
 
         public string uri;
@@ -45,14 +45,14 @@ namespace UMa.GLTF
         }
         public GLTFBufferView Append<T>(ArraySegment<T> segment, GLTFBufferTarget target) where T : struct
         {
-            var view = Storage.Extend(segment, target);
-            byteLength = Storage.GetBytes().Count;
+            var view = _storage.Extend(segment, target);
+            byteLength = _storage.GetBytes().Count;
             return view;
         }
 
         public ArraySegment<Byte> GetBytes()
         {
-            return Storage.GetBytes();
+            return _storage.GetBytes();
         }
 
         protected override void SerializeMembers(GLTFJsonFormatter f)

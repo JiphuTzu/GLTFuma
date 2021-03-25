@@ -71,9 +71,9 @@ namespace UMa.GLTF.ShaderPropExporter
 
         static UnityPath GetExportDir(string target)
         {
-            foreach (var x in UnityPath.FromUnityPath("Assets").TravserseDir())
+            foreach (var x in UnityPath.FromUnityPath("Assets").travserseDir())
             {
-                if (x.Value.EndsWith(target))
+                if (x.value.EndsWith(target))
                 {
                     var dir = x.Child("PreExportShaderProps");
                     dir.EnsureFolder();
@@ -86,12 +86,12 @@ namespace UMa.GLTF.ShaderPropExporter
         static void PreExport(SupportedShader supportedShader)
         {
             var path = GetExportDir(supportedShader.TargetFolder).Child(EscapeShaderName(supportedShader.ShaderName) + ".cs");
-            Debug.LogFormat("PreExport: {0}", path.FullPath);
+            Debug.LogFormat("PreExport: {0}", path.fullPath);
 
             var shader = Shader.Find(supportedShader.ShaderName);
             var props = ShaderProps.FromShader(shader);
 
-            File.WriteAllText(path.FullPath, props.ToString(shader.name));
+            File.WriteAllText(path.fullPath, props.ToString(shader.name));
         }
 #endif
 
