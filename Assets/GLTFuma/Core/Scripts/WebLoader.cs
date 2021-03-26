@@ -21,38 +21,40 @@ namespace UMa.GLTF
         public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
         public bool loadOnStart = false;
         private GLTFImporter _loader;
+        private IStorage _storage;
         private void Start()
         {
             if (loadOnStart && !string.IsNullOrEmpty(url))
             {
                 var storage = new WebStorage(url.Substring(0, url.LastIndexOf("/")));
-                Load(url,storage, p => text.text = $"{p * 100:f2}%", null);
+                Load(url, storage, p => text.text = $"{p * 100:f2}%", null);
             }
         }
-        public void Load(string url,WebStorage storage, Action<float> progress, Action<GameObject> complete)
+        public void Load(string url, IStorage storage, Action<float> progress, Action<GameObject> complete)
         {
             this.url = url;
-            var res = Load(storage,progress, complete);
+            _storage = storage;
+            var res = Load(progress, complete);
         }
-        public async Task Load(WebStorage storage,Action<float> progress, Action<GameObject> complete)
+        private async Task Load(Action<float> progress, Action<GameObject> complete)
         {
-            var name = url.Substring(url.LastIndexOf("/")+1);
+            var name = url.Substring(url.LastIndexOf("/") + 1);
             //加载.gltf文件
-            await storage.Load(name,p=>progress?.Invoke(p*0.1f));
+            await _storage.Load(name, p => progress?.Invoke(p * 0.1f));
 
             _loader = new GLTFImporter();
             //Debug.Log(www.downloadHandler.text);
             //用JsonUtility解析到gltf数据
-            _loader.ParseJson(Encoding.UTF8.GetString(storage.Get(name).ToArray()));
+            _loader.ParseJson(Encoding.UTF8.GetString(_storage.Get(name).ToArray()));
             //加载buffers里面的.bin数据
             int total = _loader.gltf.buffers.Count;
             int current = 0;
             foreach (var buffer in _loader.gltf.buffers)
             {
                 Debug.Log(buffer.uri);
-                await storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
+                await _storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
                 //Debug.Log(buffer.uri + " loaded");
-                buffer.OpenStorage(storage);
+                buffer.OpenStorage(_storage);
                 current++;
             }
             //跳过图片的加载
@@ -63,7 +65,7 @@ namespace UMa.GLTF
             //     current++;
             // }
             //解析mesh、material、animation等数据
-            await _loader.Load(storage, p => progress?.Invoke(0.9f + p * 0.1f));
+            await _loader.Load(_storage, p => progress?.Invoke(0.9f + p * 0.1f));
             //loader.Parse(url,www.downloadHandler.data);
             _loader.ShowMeshes();
             _loader.root.SetActive(false);
@@ -73,10 +75,16 @@ namespace UMa.GLTF
         }
         public void Unload()
         {
-            StopAllCoroutines();
-            if (_loader == null) return;
-            _loader.Dispose();
-            _loader = null;
+            if (_loader != null)
+            {
+                _loader.Dispose();
+                _loader = null;
+            }
+            if (_storage != null)
+            {
+                _storage.Dispose();
+                _storage = null;
+            }
         }
     }
 }
