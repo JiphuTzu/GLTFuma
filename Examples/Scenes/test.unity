@@ -236,7 +236,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 1082311159}
-  url: http://72studio.jcsureyes.com/presenting/presenting.gltf
+  url: /Users/jiphutzu/Desktop/volleyball/volleyball.gltf
   loadOnStart: 1
 --- !u!4 &363779615
 Transform:
@@ -590,60 +590,3 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1082311157}
   m_CullTransparentMesh: 1
---- !u!1001 &1863337173
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_RootOrder
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3019942069753801915, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5762918095929457271, guid: d8b2a042087584839abd324da79fc285, type: 3}
-      propertyPath: m_Name
-      value: DamagedHelmet
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: d8b2a042087584839abd324da79fc285, type: 3}

@@ -18,6 +18,7 @@ namespace UMa
     public class WebLoader : MonoBehaviour
     {
         public Text text;
+        //http://72studio.jcsureyes.com/202103241648111/Baseball.gltf
         //public string url = "http://72studio.jcsureyes.com/presenting/presenting.gltf";
         public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
         public bool loadOnStart = false;

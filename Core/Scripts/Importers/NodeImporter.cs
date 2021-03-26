@@ -87,6 +87,7 @@ namespace UMa.GLTF
             //
             // attach mesh
             //
+            Debug.Log("node mesh ... "+node.name+" == "+node.mesh);
             if (node.mesh != -1)
             {
                 var mesh = context.meshes[node.mesh];
