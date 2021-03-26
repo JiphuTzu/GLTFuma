@@ -1,19 +1,17 @@
 using System;
-using System.Collections;
 using System.Text;
 using System.Threading.Tasks;
-using UMa.GLTF;
 using UnityEngine;
 using UnityEngine.UI;
 //============================================================
 //支持中文，文件使用UTF-8编码
 //@author	JiphuTzu
-//@create	#CREATEDATE#
-//@company	#COMPANY#
+//@create	20210323
+//@company	UMa
 //
 //@description:
 //============================================================
-namespace UMa
+namespace UMa.GLTF
 {
     public class WebLoader : MonoBehaviour
     {

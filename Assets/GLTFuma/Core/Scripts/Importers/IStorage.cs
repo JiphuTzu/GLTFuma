@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace UMa.GLTF
@@ -7,7 +9,8 @@ namespace UMa.GLTF
     public interface IStorage
     {
         ArraySegment<Byte> Get(string url);
-        void Load(string url,Action<string> complete);
+        Task<ArraySegment<byte>> Load(string url, Action<float> progress);
+        Task<Texture2D> LoadTexture(string url, Action<float> progress);
         /// <summary>
         /// Get original filepath if exists
         /// </summary>
@@ -18,23 +21,28 @@ namespace UMa.GLTF
 
     public class SimpleStorage : IStorage
     {
-        ArraySegment<Byte> m_bytes;
+        private ArraySegment<Byte> _bytes;
 
-        public SimpleStorage():this(new ArraySegment<byte>())
-        {
-        }
+        public SimpleStorage() : this(new ArraySegment<byte>()){}
 
         public SimpleStorage(ArraySegment<Byte> bytes)
         {
-            m_bytes = bytes;
+            _bytes = bytes;
         }
 
         public ArraySegment<byte> Get(string url)
         {
-            return m_bytes;
+            return _bytes;
         }
-        public void Load(string url,Action<string> complete){
-            complete.Invoke(url);
+        public async Task<ArraySegment<byte>> Load(string url, Action<float> progress)
+        {
+            await Task.Yield();
+            return _bytes;
+        }
+        public async Task<Texture2D> LoadTexture(string url, Action<float> progress)
+        {
+            await Task.Yield();
+            return null;
         }
 
         public string GetPath(string url)
@@ -45,37 +53,43 @@ namespace UMa.GLTF
 
     public class FileSystemStorage : IStorage
     {
-        string m_root;
+        private string m_root;
+        private Dictionary<string,ArraySegment<byte>> _data;
 
         public FileSystemStorage(string root)
         {
             m_root = Path.GetFullPath(root);
+            _data = new Dictionary<string, ArraySegment<byte>>();
         }
 
         public ArraySegment<byte> Get(string url)
         {
-            Debug.Log(m_root+"---> "+url);
-            var bytes =
-                (url.StartsWith("data:"))
+            if(!_data.ContainsKey(url))
+            {
+                var bytes = (url.StartsWith("data:"))
                 ? url.ReadEmbeded()
-                : File.ReadAllBytes(Path.Combine(m_root, url))
-                ;
-            return new ArraySegment<byte>(bytes);
+                : File.ReadAllBytes(Path.Combine(m_root, url));
+                _data.Add(url,new ArraySegment<byte>(bytes));
+            }
+            
+            return _data[url];
         }
-        public void Load(string url,Action<string> complete){
-            complete.Invoke(url);
+        public async Task<ArraySegment<byte>> Load(string url, Action<float> progress)
+        {
+            var data = Get(url);
+            await Task.Yield();
+            return data;
+        }
+        public async Task<Texture2D> LoadTexture(string url, Action<float> progress)
+        {
+            await Task.Yield();
+            return null;
         }
 
         public string GetPath(string url)
         {
-            if (url.StartsWith("data:"))
-            {
-                return null;
-            }
-            else
-            {
-                return Path.Combine(m_root, url).Replace("\\", "/");
-            }
+            if (url.StartsWith("data:")) return null;
+            return Path.Combine(m_root, url).Replace("\\", "/");
         }
     }
 }

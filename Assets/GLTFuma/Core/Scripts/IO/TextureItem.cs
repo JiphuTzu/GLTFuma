@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using System.Threading.Tasks;
-using UnityEngine.Networking;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -22,13 +21,14 @@ namespace UMa.GLTF
                 return _textureLoader.texture;
             }
         }
-        public void Load(GLTFRoot gltf,IStorage storage, Action<Texture2D> complete){
+        public void Load(GLTFRoot gltf, IStorage storage, Action<Texture2D> complete)
+        {
             //Debug.Log("TextureItem Load ");
             //m_textureLoader.Load(complete);
-           
-            var load = StartLoad(gltf,storage,complete);
+
+            var load = StartLoad(gltf, storage, complete);
         }
-        private async Task<bool> StartLoad(GLTFRoot gltf,IStorage storage,Action<Texture2D> complete)
+        private async Task<bool> StartLoad(GLTFRoot gltf, IStorage storage, Action<Texture2D> complete)
         {
             //Debug.Log("Start Load "+m_textureIndex);
             var imageIndex = gltf.GetImageIndexFromTextureIndex(_textureIndex);
@@ -36,30 +36,10 @@ namespace UMa.GLTF
             gltf.GetImageBytes(storage, imageIndex, out var name, out var url);
             //Debug.Log("image url ... "+url);
             if (string.IsNullOrEmpty(url)) return false;
-            await Task.Yield();
-            //Debug.LogFormat("UnityWebRequest: {0}", url);
-            var m_uwr = UnityWebRequestTexture.GetTexture(url);
-            //Debug.Log("load texture ... "+url);
-            var ao = m_uwr.SendWebRequest();
-            // wait for request
-            while (!m_uwr.isDone)
-            {
-                await Task.Yield();
-            }
-
-            if (string.IsNullOrEmpty(m_uwr.error))
-            {
-                // Get downloaded asset bundle
-                var texture = ((DownloadHandlerTexture)m_uwr.downloadHandler).texture;
-                texture.name = name;
-                complete.Invoke(texture);
-                return true;
-            }
-            else
-            {
-                Debug.Log(m_uwr.error);
-                return false;
-            }
+            var texture = await storage.LoadTexture(url, p => {});
+            texture.name = name;
+            complete.Invoke(texture);
+            return true;
         }
 
         #region Texture converter
@@ -114,7 +94,7 @@ namespace UMa.GLTF
         }
         #endregion
 
-        public bool isAsset{get;private set;}
+        public bool isAsset { get; private set; }
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
@@ -138,11 +118,11 @@ namespace UMa.GLTF
         public TextureItem(int index)
         {
             _textureIndex = index;
-// #if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
+            // #if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
             _textureLoader = new UnityWebRequestTextureLoader(_textureIndex);
-// #else
-//             m_textureLoader = new TextureLoader(m_textureIndex);
-// #endif
+            // #else
+            //             m_textureLoader = new TextureLoader(m_textureIndex);
+            // #endif
         }
 
 #if UNITY_EDITOR
