@@ -20,12 +20,12 @@ namespace UniGLTF.UniUnlit
         
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            _mainTex = FindProperty(Utils.PropNameMainTex, properties);
-            _color = FindProperty(Utils.PropNameColor, properties);
-            _cutoff = FindProperty(Utils.PropNameCutoff, properties);
-            _blendMode = FindProperty(Utils.PropNameBlendMode, properties);
-            _cullMode = FindProperty(Utils.PropNameCullMode, properties);
-            _vColBlendMode = FindProperty(Utils.PropeNameVColBlendMode, properties);
+            _mainTex = FindProperty(UnlitExtension.PropNameMainTex, properties);
+            _color = FindProperty(UnlitExtension.PropNameColor, properties);
+            _cutoff = FindProperty(UnlitExtension.PropNameCutoff, properties);
+            _blendMode = FindProperty(UnlitExtension.PropNameBlendMode, properties);
+            _cullMode = FindProperty(UnlitExtension.PropNameCullMode, properties);
+            _vColBlendMode = FindProperty(UnlitExtension.PropeNameVColBlendMode, properties);
 //            _srcBlend = FindProperty(PropNameSrcBlend, properties);
 //            _dstBlend = FindProperty(PropNameDstBlend, properties);
 //            _zWrite = FindProperty(PropNameZWrite, properties);
@@ -44,18 +44,18 @@ namespace UniGLTF.UniUnlit
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
             var blendMode = UniUnlitRenderMode.Opaque;
-            if (material.HasProperty(Utils.PropNameStandardShadersRenderMode)) // from Standard shader
+            if (material.HasProperty(UnlitExtension.PropNameStandardShadersRenderMode)) // from Standard shader
             {
-                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(Utils.PropNameStandardShadersRenderMode));
+                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(UnlitExtension.PropNameStandardShadersRenderMode));
             }
 
             // assigns UniUnlit's properties...
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
 
             // take over old value
-            material.SetFloat(Utils.PropNameBlendMode, (float) blendMode);
+            material.SetFloat(UnlitExtension.PropNameBlendMode, (float) blendMode);
 
-            Utils.ValidateProperties(material, isRenderModeChangedByUser: true);
+            material.ValidateProperties(isRenderModeChangedByUser: true);
         }
 
         private void DrawRenderingBox(MaterialEditor materialEditor, Material[] materials)
@@ -140,7 +140,7 @@ namespace UniGLTF.UniUnlit
         {
             foreach (var material in materials)
             {
-                Utils.ValidateProperties(material, isRenderModeChangedByUser);
+                material.ValidateProperties(isRenderModeChangedByUser);
             }
         }
     }

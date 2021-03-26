@@ -205,7 +205,7 @@ namespace UMa.GLTF
         {
             var material = KHRMaterialUnlit.CreateDefault();
 
-            var renderMode = Utils.GetRenderMode(m);
+            var renderMode = m.GetRenderMode();
             if (renderMode == UniUnlitRenderMode.Opaque)
             {
                 material.alphaMode = GLTFBlendMode.OPAQUE.ToString();
@@ -223,7 +223,7 @@ namespace UMa.GLTF
                 material.alphaMode = GLTFBlendMode.OPAQUE.ToString();
             }
 
-            var cullMode = Utils.GetCullMode(m);
+            var cullMode = m.GetCullMode();
             if (cullMode == UniUnlitCullMode.Off)
             {
                 material.doubleSided = true;
