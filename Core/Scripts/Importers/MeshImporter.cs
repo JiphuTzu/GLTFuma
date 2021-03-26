@@ -315,7 +315,7 @@ namespace UMa.GLTF
                 var indices =
                  (indexBuffer >= 0)
                  ? gltf.GetIndices(indexBuffer)
-                 : TriangleUtil.FlipTriangle(Enumerable.Range(0, meshContext.positions.Length)).ToArray() // without index array
+                 : Enumerable.Range(0, meshContext.positions.Length).FlipTriangle().ToArray() // without index array
                  ;
                 for (int i = 0; i < indices.Length; ++i)
                 {
@@ -451,7 +451,7 @@ namespace UMa.GLTF
             {
                 if (prim.indices == -1)
                 {
-                    context.subMeshes.Add(TriangleUtil.FlipTriangle(Enumerable.Range(0, context.positions.Length)).ToArray());
+                    context.subMeshes.Add(Enumerable.Range(0, context.positions.Length).FlipTriangle().ToArray());
                 }
                 else
                 {

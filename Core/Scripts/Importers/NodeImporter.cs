@@ -63,7 +63,7 @@ namespace UMa.GLTF
             var go = context.nodes[i].gameObject;
             if (string.IsNullOrEmpty(go.name))
             {
-                go.name = string.Format("node{0:000}", i);
+                go.name = $"node{i:000}";
             }
 
             var nodeWithSkin = new TransformWithSkin
@@ -87,7 +87,7 @@ namespace UMa.GLTF
             //
             // attach mesh
             //
-            Debug.Log("node mesh ... "+node.name+" == "+node.mesh);
+            //Debug.Log("node mesh ... "+node.name+" == "+node.mesh);
             if (node.mesh != -1)
             {
                 var mesh = context.meshes[node.mesh];

@@ -16,11 +16,7 @@ namespace UMa.GLTF
     public struct UnityPath
     {
         #region UnityPath
-        public string value
-        {
-            get;
-            private set;
-        }
+        public string value{get;private set;}
         public string fileName
         {
             get { return Path.GetFileName(value); }
@@ -73,20 +69,9 @@ namespace UMa.GLTF
             }
         }
 
-        static readonly char[] EscapeChars = new char[]
-        {
-            '\\',
-            '/',
-            ':',
-            '*',
-            '?',
-            '"',
-            '<',
-            '>',
-            '|',
-        };
+        static readonly char[] EscapeChars = new char[]{ '\\', '/', ':', '*', '?', '"', '<', '>', '|', };
 
-        static string EscapeFilePath(string path)
+        private string EscapeFilePath(string path)
         {
             foreach (var x in EscapeChars)
             {
@@ -98,17 +83,10 @@ namespace UMa.GLTF
         public UnityPath Child(string name)
         {
             if (isNull)
-            {
                 throw new NotImplementedException();
-            }
-            else if (value == "")
-            {
+            if (string.IsNullOrEmpty(value))
                 return new UnityPath(name);
-            }
-            else
-            {
-                return new UnityPath(value + "/" + name);
-            }
+            return new UnityPath(value + "/" + name);
         }
 
         public override int GetHashCode()
@@ -137,19 +115,12 @@ namespace UMa.GLTF
         public UnityPath GetAssetFolder(string suffix)
         {
             if (!isUnderAssetsFolder)
-            {
                 throw new NotImplementedException();
-            }
 
-            return new UnityPath(
-                string.Format("{0}/{1}{2}",
-                parent.value,
-                fileNameWithoutExtension,
-                suffix
-                ));
+            return new UnityPath($"{parent.value}/{fileNameWithoutExtension}{suffix}");
         }
 
-        UnityPath(string value)
+        public UnityPath(string value)
         {
             this.value = value.Replace("\\", "/");
         }
@@ -161,12 +132,9 @@ namespace UMa.GLTF
         /// <returns></returns>
         public static UnityPath FromUnityPath(string unityPath)
         {
-            if (String.IsNullOrEmpty(unityPath))
+            if (string.IsNullOrEmpty(unityPath))
             {
-                return new UnityPath
-                {
-                    value = ""
-                };
+                return new UnityPath("");
             }
             return FromFullpath(Path.GetFullPath(unityPath));
         }
@@ -223,27 +191,15 @@ namespace UMa.GLTF
         /// <returns></returns>
         public static UnityPath FromFullpath(string fullPath)
         {
-            if (fullPath == null)
-            {
-                fullPath = "";
-            }
+            if (fullPath == null) fullPath = "";
+
             fullPath = fullPath.Replace("\\", "/");
 
             if (fullPath == baseFullPath)
-            {
-                return new UnityPath
-                {
-                    value = ""
-                };
-            }
-            else if (fullPath.StartsWith(baseFullPath + "/"))
-            {
+                return new UnityPath("");
+            if (fullPath.StartsWith(baseFullPath + "/"))
                 return new UnityPath(fullPath.Substring(baseFullPath.Length + 1));
-            }
-            else
-            {
-                return default(UnityPath);
-            }
+            return default(UnityPath);
         }
 
         public static bool IsUnderAssetFolder(string fullPath)
@@ -328,10 +284,7 @@ namespace UMa.GLTF
                 // ensure parent
                 parent.ImportAsset();
                 // create
-                AssetDatabase.CreateFolder(
-                    parent.value,
-                    Path.GetFileName(value)
-                    );
+                AssetDatabase.CreateFolder(parent.value, Path.GetFileName(value));
                 ImportAsset();
             }
         }

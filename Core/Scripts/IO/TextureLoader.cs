@@ -14,7 +14,7 @@ namespace UMa.GLTF
     public interface ITextureLoader : IDisposable
     {
         void Load(Action complete);
-        Texture2D Texture { get; }
+        Texture2D texture { get; }
 
         /// <summary>
         /// Call from any thread
@@ -34,23 +34,20 @@ namespace UMa.GLTF
 #if UNITY_EDITOR
     public class AssetTextureLoader : ITextureLoader
     {
-        public Texture2D Texture
-        {
-            private set;
-            get;
-        }
+        public Texture2D texture { get; private set; }
 
-        UnityPath m_assetPath;
+        private UnityPath _assetPath;
 
         public AssetTextureLoader(UnityPath assetPath, string _)
         {
-            m_assetPath = assetPath;
+            _assetPath = assetPath;
         }
 
         public void Dispose()
         {
         }
-        public void Load(Action complete){
+        public void Load(Action complete)
+        {
             complete.Invoke();
         }
 
@@ -63,20 +60,20 @@ namespace UMa.GLTF
             //
             // texture from assets
             //
-            m_assetPath.ImportAsset();
-            var importer = m_assetPath.GetImporter<TextureImporter>();
+            _assetPath.ImportAsset();
+            var importer = _assetPath.GetImporter<TextureImporter>();
             if (importer == null)
             {
-                Debug.LogWarningFormat("fail to get TextureImporter: {0}", m_assetPath);
+                Debug.LogWarningFormat("fail to get TextureImporter: {0}", _assetPath);
             }
             importer.sRGBTexture = !isLinear;
             importer.SaveAndReimport();
 
-            Texture = m_assetPath.LoadAsset<Texture2D>();
+            texture = _assetPath.LoadAsset<Texture2D>();
             //Texture.name = m_textureName;
-            if (Texture == null)
+            if (texture == null)
             {
-                Debug.LogWarningFormat("fail to Load Texture2D: {0}", m_assetPath);
+                Debug.LogWarningFormat("fail to Load Texture2D: {0}", _assetPath);
             }
 
             yield break;
@@ -92,7 +89,7 @@ namespace UMa.GLTF
             m_textureIndex = textureIndex;
         }
 
-        public Texture2D Texture
+        public Texture2D texture
         {
             private set;
             get;
@@ -101,7 +98,8 @@ namespace UMa.GLTF
         public void Dispose()
         {
         }
-        public void Load(Action complete){
+        public void Load(Action complete)
+        {
             complete.Invoke();
         }
 
@@ -137,11 +135,11 @@ namespace UMa.GLTF
             //
             // texture from image(png etc) bytes
             //
-            Texture = new Texture2D(2, 2, TextureFormat.ARGB32, false, isLinear);
-            Texture.name = m_textureName;
+            texture = new Texture2D(2, 2, TextureFormat.ARGB32, false, isLinear);
+            texture.name = m_textureName;
             if (m_imageBytes != null)
             {
-                Texture.LoadImage(m_imageBytes);
+                texture.LoadImage(m_imageBytes);
             }
             yield break;
         }
@@ -149,7 +147,7 @@ namespace UMa.GLTF
 
     public class UnityWebRequestTextureLoader : ITextureLoader
     {
-        public Texture2D Texture
+        public Texture2D texture
         {
             private set;
             get;
@@ -274,8 +272,8 @@ namespace UMa.GLTF
             {
                 tex.LoadImage(m_segments.ToArray());
                 tex.Apply();
-                Texture = tex;
-                Texture.name = m_textureName;
+                texture = tex;
+                texture.name = m_textureName;
             }
             yield return null;
         }
@@ -287,26 +285,26 @@ namespace UMa.GLTF
         }
         private async Task<bool> StartLoad(Action complete)
         {
-            var m_uwr = UnityWebRequestTexture.GetTexture(url);
-            Debug.Log("load texture ... "+url);
-            var ao = m_uwr.SendWebRequest();
+            var www = UnityWebRequestTexture.GetTexture(url);
+            Debug.Log("load texture ... " + url);
+            var ao = www.SendWebRequest();
             // wait for request
-            while (!m_uwr.isDone)
+            while (!www.isDone)
             {
                 await Task.Yield();
             }
 
-            if (string.IsNullOrEmpty(m_uwr.error))
+            if (string.IsNullOrEmpty(www.error))
             {
                 // Get downloaded asset bundle
-                Texture = ((DownloadHandlerTexture)m_uwr.downloadHandler).texture;
-                Texture.name = m_textureName;
+                texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                texture.name = m_textureName;
                 complete.Invoke();
                 return true;
             }
             else
             {
-                Debug.Log(m_uwr.error);
+                Debug.Log(www.error);
                 return false;
             }
         }

@@ -11,7 +11,7 @@ namespace UMa.GLTF
         {
             get { return m_textures; }
         }
-        public List<TextureIO.TextureExportItem> unityTextures;
+        public List<TextureExportItem> unityTextures;
         List<Texture> m_exportTextures;
         public Texture GetExportTexture(int index)
         {
@@ -29,7 +29,7 @@ namespace UMa.GLTF
             return m_textures[index];
         }
 
-        public TextureExportManager(List<TextureIO.TextureExportItem> unityTextures)
+        public TextureExportManager(List<TextureExportItem> unityTextures)
         {
             this.unityTextures = unityTextures;
             /*
@@ -57,7 +57,7 @@ namespace UMa.GLTF
             }
 
             // ToDo: may already exists
-            m_exportTextures[index] = TextureItem.CopyTexture(texture, readWrite, null);
+            m_exportTextures[index] = texture.CopyTexture(readWrite, null);
 
             return index;
         }

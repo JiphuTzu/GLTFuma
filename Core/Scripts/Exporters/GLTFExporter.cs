@@ -42,10 +42,10 @@ namespace UMa.GLTF
 
         public TextureExportManager textureManager;
 
-        protected virtual IMaterialExporter CreateMaterialExporter()
-        {
-            return new MaterialExporter();
-        }
+        // protected virtual IMaterialExporter CreateMaterialExporter()
+        // {
+        //     return new MaterialExporter();
+        // }
 
         /// <summary>
         /// このエクスポーターがサポートするExtension
@@ -57,10 +57,17 @@ namespace UMa.GLTF
                 yield return KHRMaterialUnlit.ExtensionName;
             }
         }
+        private IMeshExporter _meshExporter;
+        private IMaterialExporter _materialExporter;
+        private IAnimationExporter _animationExporter;
+        public GLTFExporter(GLTFRoot gltf) : this(gltf, null, null, null) { }
 
-        public GLTFExporter(GLTFRoot gltf)
+        public GLTFExporter(GLTFRoot gltf, IMaterialExporter materialExporter, IMeshExporter meshExporter, IAnimationExporter animationExporter)
         {
             this.gltf = gltf;
+            _materialExporter = materialExporter ?? new MaterialExporter();
+            _meshExporter = meshExporter ?? new MeshExporter();
+            _animationExporter = animationExporter ?? new AnimationExporter();
 
             this.gltf.extensionsUsed.AddRange(extensionUsed);
 
@@ -120,18 +127,18 @@ namespace UMa.GLTF
 
             // if (x.gameObject.activeInHierarchy)
             // {
-                var meshFilter = x.GetComponent<MeshFilter>();
-                if (meshFilter != null)
-                {
-                    node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
-                }
+            var meshFilter = x.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
+            }
 
-                var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
-                if (skinnredMeshRenderer != null)
-                {
-                    node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
-                    node.skin = skins.IndexOf(skinnredMeshRenderer);
-                }
+            var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
+            if (skinnredMeshRenderer != null)
+            {
+                node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
+                node.skin = skins.IndexOf(skinnredMeshRenderer);
+            }
             // }
 
             return node;
@@ -152,24 +159,20 @@ namespace UMa.GLTF
 
             try
             {
-
-                nodes = go.transform.Traverse()
-                    .Skip(1) // exclude root object for the symmetry with the importer
-                    .ToList();
+                // exclude root object for the symmetry with the importer
+                nodes = go.transform.Traverse().Skip(1).ToList();
 
                 #region Materials and Textures
                 materials = nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-                var unityTextures = materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
+                var unityTextures = materials.SelectMany(x => x.GetTextures()).Where(x => x.Texture != null).Distinct().ToList();
 
                 textureManager = new TextureExportManager(unityTextures);
 
-                var materialExporter = CreateMaterialExporter();
-                gltf.materials = materials.Select(x => materialExporter.ExportMaterial(x, textureManager)).ToList();
-                Debug.Log("image count = "+unityTextures.Count);
+                gltf.materials = materials.Select(x => _materialExporter.ExportMaterial(x, textureManager)).ToList();
+                Debug.Log("image count = " + unityTextures.Count);
                 for (int i = 0; i < unityTextures.Count; ++i)
                 {
-                    var unityTexture = unityTextures[i];
-                    TextureIO.ExportTexture(gltf, bufferIndex, textureManager.GetExportTexture(i), unityTexture.TextureType);
+                    gltf.ExportTexture(bufferIndex, textureManager.GetExportTexture(i), unityTextures[i].TextureType);
                 }
                 #endregion
 
@@ -196,8 +199,8 @@ namespace UMa.GLTF
                         return true;
                     })
                     .ToList();
-                Debug.Log("unityMesher...."+unityMeshes.Count);
-                MeshExporter.ExportMeshes(gltf, bufferIndex, unityMeshes, materials, useSparseAccessorForMorphTarget);
+                Debug.Log("unityMesher...." + unityMeshes.Count);
+                _meshExporter.Export(gltf, bufferIndex, unityMeshes, materials, useSparseAccessorForMorphTarget);
                 meshes = unityMeshes.Select(x => x.mesh).ToList();
                 #endregion
 
@@ -248,19 +251,19 @@ namespace UMa.GLTF
                 var animation = go.GetComponent<Animation>();
                 if (animator != null)
                 {
-                    clips = AnimationExporter.GetAnimationClips(animator);
+                    clips = _animationExporter.GetAnimationClips(animator);
                 }
                 else if (animation != null)
                 {
-                    clips = AnimationExporter.GetAnimationClips(animation);
+                    clips = _animationExporter.GetAnimationClips(animation);
                 }
 
                 if (clips.Any())
                 {
-                    Debug.Log("export clips.."+clips.Count);
+                    Debug.Log("export clips.." + clips.Count);
                     foreach (AnimationClip clip in clips)
                     {
-                        var animationWithCurve = AnimationExporter.Export(clip, go.transform, nodes);
+                        var animationWithCurve = _animationExporter.Export(clip, go.transform, nodes);
 
                         foreach (var kv in animationWithCurve.samplers)
                         {
@@ -270,7 +273,7 @@ namespace UMa.GLTF
 
                             var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.output);
                             sampler.output = outputAccessorIndex;
-                            Debug.Log(sampler.interpolation+">>"+string.Join(",",kv.Value.output));
+                            Debug.Log(sampler.interpolation + ">>" + string.Join(",", kv.Value.output));
 
                             // modify accessors
                             var outputAccessor = gltf.accessors[outputAccessorIndex];

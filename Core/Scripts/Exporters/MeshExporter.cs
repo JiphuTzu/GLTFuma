@@ -10,13 +10,14 @@ namespace UMa.GLTF
         public Mesh mesh;
         public Renderer rendererer;
     }
-
-    public static class MeshExporter
+    public interface IMeshExporter
     {
-        static GLTFMesh ExportPrimitives(GLTFRoot gltf, int bufferIndex,
-            string rendererName,
-            Mesh mesh, Material[] materials,
-            List<Material> unityMaterials)
+        void Export(GLTFRoot gltf, int bufferIndex, List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials, bool useSparseAccessorForMorphTarget);
+    }
+
+    public class MeshExporter : IMeshExporter
+    {
+        private GLTFMesh ExportPrimitives(GLTFRoot gltf, int bufferIndex, string rendererName, Mesh mesh, Material[] materials, List<Material> unityMaterials)
         {
             var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
             var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, GLTFBufferTarget.ARRAY_BUFFER);
@@ -68,7 +69,7 @@ namespace UMa.GLTF
             var gltfMesh = new GLTFMesh(mesh.name);
             for (int j = 0; j < mesh.subMeshCount; ++j)
             {
-                var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
+                var indices = mesh.GetIndices(j).FlipTriangle().Select(y => (uint)y).ToArray();
                 var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, GLTFBufferTarget.ELEMENT_ARRAY_BUFFER);
 
                 if (j >= materials.Length)
@@ -88,7 +89,7 @@ namespace UMa.GLTF
             return gltfMesh;
         }
 
-        static bool UseSparse(
+        private bool UseSparse(
             bool usePosition, Vector3 position,
             bool useNormal, Vector3 normal,
             bool useTangent, Vector3 tangent
@@ -102,7 +103,7 @@ namespace UMa.GLTF
             return useSparse;
         }
 
-        static GLTFMorphTarget ExportMorphTarget(GLTFRoot gltf, int bufferIndex,
+        private GLTFMorphTarget ExportMorphTarget(GLTFRoot gltf, int bufferIndex,
             Mesh mesh, int j,
             bool useSparseAccessorForMorphTarget)
         {
@@ -224,13 +225,11 @@ namespace UMa.GLTF
             };
         }
 
-        public static void ExportMeshes(GLTFRoot gltf, int bufferIndex,
-            List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials,
-            bool useSparseAccessorForMorphTarget)
+        public void Export(GLTFRoot gltf, int bufferIndex, List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials, bool useSparseAccessorForMorphTarget)
         {
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
-                Debug.Log("export mesh ... "+i+"/"+unityMeshes.Count);
+                Debug.Log("export mesh ... " + i + "/" + unityMeshes.Count);
                 var x = unityMeshes[i];
                 var mesh = x.mesh;
                 var materials = x.rendererer.sharedMaterials;
