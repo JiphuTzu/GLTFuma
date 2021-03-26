@@ -23,7 +23,7 @@ namespace UniGLTF.UniUnlit
         Multiply = 1,
     }
     
-    public static class Utils
+    public static class UnlitExtension
     {
         public const string PropNameMainTex = "_MainTex";
         public const string PropNameColor = "_Color";
@@ -46,22 +46,22 @@ namespace UniGLTF.UniUnlit
         public const string TagRenderTypeValueTransparentCutout = "TransparentCutout";
         public const string TagRenderTypeValueTransparent = "Transparent";
 
-        public static void SetRenderMode(Material material, UniUnlitRenderMode mode)
+        public static void SetRenderMode(this Material material, UniUnlitRenderMode mode)
         {
             material.SetInt(PropNameBlendMode, (int)mode);
         }
 
-        public static void SetCullMode(Material material, UniUnlitCullMode mode)
+        public static void SetCullMode(this Material material, UniUnlitCullMode mode)
         {
             material.SetInt(PropNameCullMode, (int) mode);
         }
 
-        public static UniUnlitRenderMode GetRenderMode(Material material)
+        public static UniUnlitRenderMode GetRenderMode(this Material material)
         {
             return (UniUnlitRenderMode)material.GetInt(PropNameBlendMode);
         }
 
-        public static UniUnlitCullMode GetCullMode(Material material)
+        public static UniUnlitCullMode GetCullMode(this Material material)
         {
             return (UniUnlitCullMode)material.GetInt(PropNameCullMode);
         }
@@ -73,7 +73,7 @@ namespace UniGLTF.UniUnlit
         /// </summary>
         /// <param name="material">Target material</param>
         /// <param name="isRenderModeChangedByUser">Is changed by user</param>
-        public static void ValidateProperties(Material material, bool isRenderModeChangedByUser = false)
+        public static void ValidateProperties(this Material material, bool isRenderModeChangedByUser = false)
         {
             SetupBlendMode(material, (UniUnlitRenderMode)material.GetFloat(PropNameBlendMode),
                 isRenderModeChangedByUser);

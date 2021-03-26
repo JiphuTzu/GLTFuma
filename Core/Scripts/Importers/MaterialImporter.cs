@@ -13,11 +13,7 @@ namespace UMa.GLTF
     {
         IShaderStore m_shaderStore;
 
-        GLTFImporter m_context;
-        protected GLTFImporter Context
-        {
-            get { return m_context; }
-        }
+        private GLTFImporter m_context;
 
         public MaterialImporter(IShaderStore shaderStore, GLTFImporter context)
         {
@@ -85,7 +81,7 @@ namespace UMa.GLTF
             if (x.extensions != null && x.extensions.KHR_materials_unlit != null)
             {
                 // texture
-                Context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
+                m_context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
                 // var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
                 // if (texture != null)
                 // {
@@ -102,33 +98,33 @@ namespace UMa.GLTF
                 //renderMode
                 if (x.alphaMode == "OPAQUE")
                 {
-                    Utils.SetRenderMode(material, UniUnlitRenderMode.Opaque);
+                    material.SetRenderMode(UniUnlitRenderMode.Opaque);
                 }
                 else if (x.alphaMode == "BLEND")
                 {
-                    Utils.SetRenderMode(material, UniUnlitRenderMode.Transparent);
+                    material.SetRenderMode(UniUnlitRenderMode.Transparent);
                 }
                 else if(x.alphaMode == "MASK")
                 {
-                    Utils.SetRenderMode(material, UniUnlitRenderMode.Cutout);
+                    material.SetRenderMode(UniUnlitRenderMode.Cutout);
                 }
                 else
                 {
                     // default OPAQUE
-                    Utils.SetRenderMode(material, UniUnlitRenderMode.Opaque);
+                    material.SetRenderMode(UniUnlitRenderMode.Opaque);
                 }
 
                 // culling
                 if (x.doubleSided)
                 {
-                    Utils.SetCullMode(material, UniUnlitCullMode.Off);
+                    material.SetCullMode(UniUnlitCullMode.Off);
                 }
                 else
                 {
-                    Utils.SetCullMode(material, UniUnlitCullMode.Back);
+                    material.SetCullMode(UniUnlitCullMode.Back);
                 }
 
-                Utils.ValidateProperties(material, true);
+                material.ValidateProperties(true);
 
                 return material;
             }
@@ -144,7 +140,7 @@ namespace UMa.GLTF
 
                 if (x.pbrMetallicRoughness.baseColorTexture != null && x.pbrMetallicRoughness.baseColorTexture.index != -1)
                 {
-                    Context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
+                    m_context.SetMaterialTexture(material,x.pbrMetallicRoughness.baseColorTexture.index,null);
                     // var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
                     // if (texture != null)
                     // {
@@ -155,7 +151,7 @@ namespace UMa.GLTF
                 if (x.pbrMetallicRoughness.metallicRoughnessTexture != null && x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                 {
                     material.EnableKeyword("_METALLICGLOSSMAP");
-                    Context.SetMaterialTexture(material,x.pbrMetallicRoughness.metallicRoughnessTexture.index,"_MetallicGlossMap");
+                    m_context.SetMaterialTexture(material,x.pbrMetallicRoughness.metallicRoughnessTexture.index,"_MetallicGlossMap");
                     // var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                     // if (texture != null)
                     // {
@@ -171,7 +167,7 @@ namespace UMa.GLTF
             if (x.normalTexture != null && x.normalTexture.index != -1)
             {
                 material.EnableKeyword("_NORMALMAP");
-                if(Context.SetMaterialTexture(material,x.normalTexture.index,"_BumpMap")){
+                if(m_context.SetMaterialTexture(material,x.normalTexture.index,"_BumpMap")){
                 // var texture = Context.GetTexture(x.normalTexture.index);
                 // if (texture != null)
                 // {
@@ -183,7 +179,7 @@ namespace UMa.GLTF
 
             if (x.occlusionTexture != null && x.occlusionTexture.index != -1)
             {
-                if(Context.SetMaterialTexture(material,x.occlusionTexture.index,"_OcclusionMap")){
+                if(m_context.SetMaterialTexture(material,x.occlusionTexture.index,"_OcclusionMap")){
                 // var texture = Context.GetTexture(x.occlusionTexture.index);
                 // if (texture != null)
                 // {
@@ -211,7 +207,7 @@ namespace UMa.GLTF
                     // {
                     //     material.SetTexture("_EmissionMap", texture.Texture);
                     // }
-                    Context.SetMaterialTexture(material,x.emissiveTexture.index,"_EmissionMap");
+                    m_context.SetMaterialTexture(material,x.emissiveTexture.index,"_EmissionMap");
                 }
             }
 
