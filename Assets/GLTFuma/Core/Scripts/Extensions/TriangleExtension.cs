@@ -4,44 +4,38 @@ using System.Collections.Generic;
 
 namespace UMa.GLTF
 {
-    public static class TriangleUtil
+    public static class TriangleExtension
     {
-        public static IEnumerable<int> FlipTriangle(IEnumerable<Byte> src)
+        public static IEnumerable<int> FlipTriangle(this IEnumerable<Byte> src)
         {
-            return FlipTriangle(src.Select(x => (Int32)x));
+            return src.Select(x => (Int32)x).FlipTriangle();
         }
 
-        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
+        public static IEnumerable<int> FlipTriangle(this IEnumerable<UInt16> src)
         {
-            return FlipTriangle(src.Select(x => (Int32)x));
+            return src.Select(x => (Int32)x).FlipTriangle();
         }
 
-        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt32> src)
+        public static IEnumerable<int> FlipTriangle(this IEnumerable<UInt32> src)
         {
-            return FlipTriangle(src.Select(x => (Int32)x));
+            return src.Select(x => (Int32)x).FlipTriangle();
         }
 
-        public static IEnumerable<int> FlipTriangle(IEnumerable<Int32> src)
+        public static IEnumerable<int> FlipTriangle(this IEnumerable<Int32> src)
         {
             var it = src.GetEnumerator();
             while (true)
             {
                 if (!it.MoveNext())
-                {
                     yield break;
-                }
                 var i0 = it.Current;
-
                 if (!it.MoveNext())
-                {
                     yield break;
-                }
+
                 var i1 = it.Current;
-
                 if (!it.MoveNext())
-                {
                     yield break;
-                }
+
                 var i2 = it.Current;
 
                 yield return i2;

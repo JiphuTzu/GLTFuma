@@ -4,28 +4,37 @@ using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Animations;
 #endif
 
 
 namespace UMa.GLTF
 {
-
-    public static class AnimationExporter
-    {
-        public class InputOutputValues
-        {
-            public float[] input;
-            public float[] output;
-        }
-
-        public class AnimationWithSampleCurves
-        {
-            public GLTFAnimation animation;
-            public Dictionary<int, InputOutputValues> samplers = new Dictionary<int, InputOutputValues>();
-        }
-
 #if UNITY_EDITOR
-        public static List<AnimationClip> GetAnimationClips(Animation animation)
+    public class InputOutputValues
+    {
+        public float[] input;
+        public float[] output;
+    }
+    public class AnimationWithSampleCurves
+    {
+        public GLTFAnimation animation;
+        public Dictionary<int, InputOutputValues> samplers = new Dictionary<int, InputOutputValues>();
+    }
+#endif
+    public interface IAnimationExporter
+    {
+#if UNITY_EDITOR
+        List<AnimationClip> GetAnimationClips(Animation animation);
+        List<AnimationClip> GetAnimationClips(Animator animator);
+        AnimationWithSampleCurves Export(AnimationClip clip, Transform root, List<Transform> nodes);
+#endif
+    }
+
+    public class AnimationExporter : IAnimationExporter
+    {
+#if UNITY_EDITOR
+        public List<AnimationClip> GetAnimationClips(Animation animation)
         {
             var clips = new List<AnimationClip>();
             foreach (AnimationState state in animation)
@@ -35,12 +44,11 @@ namespace UMa.GLTF
             return clips;
         }
 
-        public static List<AnimationClip> GetAnimationClips(Animator animator)
+        public List<AnimationClip> GetAnimationClips(Animator animator)
         {
             var clips = new List<AnimationClip>();
 
-            RuntimeAnimatorController runtimeAnimatorController = animator.runtimeAnimatorController;
-            UnityEditor.Animations.AnimatorController animationController = runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
+            AnimatorController animationController = animator.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
 
             if (animationController == null)
             {
@@ -57,13 +65,13 @@ namespace UMa.GLTF
             return clips;
         }
 
-        static int GetNodeIndex(Transform root, List<Transform> nodes, string path)
+        private int GetNodeIndex(Transform root, List<Transform> nodes, string path)
         {
             var descendant = root.GetFromPath(path);
             return nodes.IndexOf(descendant);
         }
 
-        public static GLTFAnimationTarget.AnimationProperty PropertyToTarget(string property)
+        public GLTFAnimationTarget.AnimationProperty PropertyToTarget(string property)
         {
             if (property.StartsWith("m_LocalPosition."))
             {
@@ -85,7 +93,8 @@ namespace UMa.GLTF
             {
                 return GLTFAnimationTarget.AnimationProperty.BlendShape;
             }
-            else if(property.StartsWith("m_IsActive")){
+            else if (property.StartsWith("m_IsActive"))
+            {
                 return GLTFAnimationTarget.AnimationProperty.Active;
             }
             else
@@ -94,7 +103,7 @@ namespace UMa.GLTF
             }
         }
 
-        public static int GetElementOffset(string property)
+        public int GetElementOffset(string property)
         {
 
             if (property.EndsWith(".x"))
@@ -113,7 +122,7 @@ namespace UMa.GLTF
             {
                 return 3;
             }
-            if(property.StartsWith("m_IsActive"))
+            if (property.StartsWith("m_IsActive"))
             {
                 return 0;
             }
@@ -123,7 +132,7 @@ namespace UMa.GLTF
             }
         }
 
-        public static AnimationWithSampleCurves Export(AnimationClip clip, Transform root, List<Transform> nodes)
+        public AnimationWithSampleCurves Export(AnimationClip clip, Transform root, List<Transform> nodes)
         {
             var animation = new AnimationWithSampleCurves
             {
@@ -135,7 +144,7 @@ namespace UMa.GLTF
             foreach (var binding in bindings)
             {
 
-                var property = AnimationExporter.PropertyToTarget(binding.propertyName);
+                var property = PropertyToTarget(binding.propertyName);
                 if (property == GLTFAnimationTarget.AnimationProperty.NotImplemented)
                 {
                     Debug.LogWarning("Not Implemented keyframe property : " + binding.propertyName);
@@ -160,10 +169,10 @@ namespace UMa.GLTF
                 {
                     elementCount = GLTFAnimationTarget.GetElementCount(property);
                 }
-                Debug.Log("export animation binding ... "+nodeIndex+" == "+elementCount);
+                Debug.Log("export animation binding ... " + nodeIndex + " == " + elementCount);
 
                 // 同一のsamplerIndexが割り当てられているcurveDataがある場合はそれを使用し、無ければ作る
-                    var curveData = curveDatas.FirstOrDefault(x => x.samplerIndex == samplerIndex);
+                var curveData = curveDatas.FirstOrDefault(x => x.samplerIndex == samplerIndex);
                 if (curveData == null)
                 {
                     curveData = new AnimationCurveData(AnimationUtility.GetKeyRightTangentMode(curve, 0), property, samplerIndex, elementCount);
@@ -182,7 +191,7 @@ namespace UMa.GLTF
                 }
                 else
                 {
-                    elementOffset = AnimationExporter.GetElementOffset(binding.propertyName);
+                    elementOffset = GetElementOffset(binding.propertyName);
                 }
 
                 if (elementOffset >= 0 && elementOffset < elementCount)
@@ -225,5 +234,5 @@ namespace UMa.GLTF
             return animation;
         }
 #endif
-        }
     }
+}

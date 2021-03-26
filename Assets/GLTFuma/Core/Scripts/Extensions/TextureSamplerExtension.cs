@@ -5,27 +5,24 @@ using UnityEngine;
 
 namespace UMa.GLTF
 {
-    public static class TextureSamplerUtil
+    public static class TextureSamplerExtension
     {
         #region WrapMode
         public enum TextureWrapType
         {
             All,
-#if UNITY_2017_1_OR_NEWER
             U,
             V,
-            W,
-#endif
+            W
         }
 
-        public static KeyValuePair<TextureWrapType, TextureWrapMode> TypeWithMode(TextureWrapType type, TextureWrapMode mode)
+        private static KeyValuePair<TextureWrapType, TextureWrapMode> TypeWithMode(TextureWrapType type, TextureWrapMode mode)
         {
             return new KeyValuePair<TextureWrapType, TextureWrapMode>(type, mode);
         }
 
-        public static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapMode(GLTFTextureSampler sampler)
+        private static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapModes(GLTFTextureSampler sampler)
         {
-#if UNITY_2017_1_OR_NEWER
             if (sampler.wrapS == sampler.wrapT)
             {
                 switch (sampler.wrapS)
@@ -94,34 +91,12 @@ namespace UMa.GLTF
                     default:
                         throw new NotImplementedException();
                 }
-#else
-            // Unity2017.1より前
-            // * wrapSとwrapTの区別が無くてwrapしかない
-            // * Mirrorが無い
 
-            switch (sampler.wrapS)
-            {
-                case glWrap.NONE: // default
-                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
-                    break;
-
-                case glWrap.CLAMP_TO_EDGE:
-                case glWrap.MIRRORED_REPEAT:
-                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
-                    break;
-
-                case glWrap.REPEAT:
-                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-#endif
             }
         }
         #endregion
 
-        public static FilterMode ImportFilterMode(GLTFFilter filterMode)
+        private static FilterMode ToFilterMode(this GLTFFilter filterMode)
         {
             switch (filterMode)
             {
@@ -144,45 +119,36 @@ namespace UMa.GLTF
             }
         }
 
-        public static void SetSampler(Texture2D texture, GLTFTextureSampler sampler)
+        public static void SetSampler(this Texture2D texture, GLTFTextureSampler sampler)
         {
-            if (texture == null)
-            {
-                return;
-            }
-
-            foreach (var kv in GetUnityWrapMode(sampler))
+            if (texture == null) return;
+            var wrapModes= GetUnityWrapModes(sampler);
+            foreach (var kv in wrapModes)
             {
                 switch (kv.Key)
                 {
                     case TextureWrapType.All:
                         texture.wrapMode = kv.Value;
                         break;
-
-#if UNITY_2017_1_OR_NEWER
                     case TextureWrapType.U:
                         texture.wrapModeU = kv.Value;
                         break;
-
                     case TextureWrapType.V:
                         texture.wrapModeV = kv.Value;
                         break;
-
                     case TextureWrapType.W:
                         texture.wrapModeW = kv.Value;
                         break;
-#endif
-
                     default:
                         throw new NotImplementedException();
                 }
             }
 
-            texture.filterMode = ImportFilterMode(sampler.minFilter);
+            texture.filterMode = sampler.minFilter.ToFilterMode();
         }
 
         #region Export
-        public static GLTFFilter ExportFilterMode(Texture texture)
+        private static GLTFFilter GetFilter(Texture texture)
         {
             switch (texture.filterMode)
             {
@@ -200,25 +166,17 @@ namespace UMa.GLTF
             }
         }
 
-        public static TextureWrapMode GetWrapS(Texture texture)
+        private static TextureWrapMode GetWrapS(this Texture texture)
         {
-#if UNITY_2017_1_OR_NEWER
             return texture.wrapModeU;
-#else
-            return texture.wrapMode;
-#endif
         }
 
-        public static TextureWrapMode GetWrapT(Texture texture)
+        private static TextureWrapMode GetWrapT(this Texture texture)
         {
-#if UNITY_2017_1_OR_NEWER
             return texture.wrapModeV;
-#else
-            return texture.wrapMode;
-#endif
         }
 
-        public static GLTFWrap ExportWrapMode(TextureWrapMode wrapMode)
+        private static GLTFWrap GetWrapMode(this TextureWrapMode wrapMode)
         {
             switch (wrapMode)
             {
@@ -228,22 +186,20 @@ namespace UMa.GLTF
                 case TextureWrapMode.Repeat:
                     return GLTFWrap.REPEAT;
 
-#if UNITY_2017_1_OR_NEWER
                 case TextureWrapMode.Mirror:
                 case TextureWrapMode.MirrorOnce:
                     return GLTFWrap.MIRRORED_REPEAT;
-#endif
 
                 default:
-                    throw new NotImplementedException();
+                    throw new NotImplementedException(wrapMode.ToString());
             }
         }
 
-        public static GLTFTextureSampler Export(Texture texture)
+        public static GLTFTextureSampler ToTextureSampler(this Texture texture)
         {
-            var filter = ExportFilterMode(texture);
-            var wrapS = ExportWrapMode(GetWrapS(texture));
-            var wrapT = ExportWrapMode(GetWrapT(texture));
+            var filter = GetFilter(texture);
+            var wrapS = texture.GetWrapS().GetWrapMode();
+            var wrapT = texture.GetWrapT().GetWrapMode();
             return new GLTFTextureSampler
             {
                 magFilter = filter,

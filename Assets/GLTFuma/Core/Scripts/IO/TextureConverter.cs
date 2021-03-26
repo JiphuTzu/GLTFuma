@@ -19,7 +19,7 @@ namespace UMa.GLTF
 
         public static Texture2D Convert(Texture2D texture, GLTFTextureType textureType, ColorConversion colorConversion, Material convertMaterial)
         {
-            var copyTexture = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), convertMaterial);
+            var copyTexture = texture.CopyTexture(textureType.GetColorSpace(), convertMaterial);
             if (colorConversion != null)
             {
                 copyTexture.SetPixels32(copyTexture.GetPixels32().Select(x => colorConversion(x)).ToArray());

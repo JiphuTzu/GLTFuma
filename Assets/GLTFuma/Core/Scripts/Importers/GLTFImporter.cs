@@ -248,7 +248,7 @@ namespace UMa.GLTF
             gltf = JsonUtility.FromJson<GLTFRoot>(this.json);
             if (gltf.asset.version != "2.0")
             {
-                throw new UniGLTFException("unknown gltf version {0}", gltf.asset.version);
+                throw new GLTFumaException("unknown gltf version {0}", gltf.asset.version);
             }
 
             // Version Compatibility
@@ -268,7 +268,7 @@ namespace UMa.GLTF
             gltf = JsonUtility.FromJson<GLTFRoot>(this.json);
             if (gltf.asset.version != "2.0")
             {
-                throw new UniGLTFException("unknown gltf version {0}", gltf.asset.version);
+                throw new GLTFumaException("unknown gltf version {0}", gltf.asset.version);
             }
 
             // Version Compatibility
@@ -346,7 +346,7 @@ namespace UMa.GLTF
 
         public void CreateTextureItems(UnityPath imageBaseDir = default(UnityPath))
         {
-            Debug.Log("create texture items" + _textures.Count);
+//            Debug.Log("create texture items" + _textures.Count);
             if (_textures.Any()) return;
 
             for (int i = 0; i < gltf.textures.Count; ++i)
@@ -399,7 +399,7 @@ namespace UMa.GLTF
             // progress.Invoke(0.15f);
             // yield return TexturesProcessOnMainThread();
             // progress.Invoke(0.2f);
-            Debug.Log("start load material");
+            //Debug.Log("start load material");
             await LoadMaterials();
             progress.Invoke(0.3f);
             // if (gltf.meshes.SelectMany(x => x.primitives)
@@ -443,12 +443,12 @@ namespace UMa.GLTF
 
             await LoadNodes();
             progress.Invoke(0.9f);
-            Debug.Log("start BuildHierarchy ");
+            //Debug.Log("start BuildHierarchy ");
             await BuildHierarchy();
 
             using (MeasureTime("AnimationImporter"))
             {
-                Debug.Log("animators....");
+                //Debug.Log("animators....");
                 _animationImporter.ImportAnimation(this);
             }
 
@@ -543,7 +543,7 @@ namespace UMa.GLTF
 
         private async Task BuildHierarchy()
         {
-            Debug.Log("BuildHierarchy");
+            //Debug.Log("BuildHierarchy");
             using (MeasureTime("BuildHierarchy"))
             {
                 var nodes = new List<TransformWithSkin>();
@@ -568,7 +568,7 @@ namespace UMa.GLTF
                     t.SetParent(root.transform, false);
                 }
             }
-            Debug.Log("root .... "+root);
+            //Debug.Log("root .... "+root);
             await Task.Yield();
         }
 
@@ -592,15 +592,12 @@ namespace UMa.GLTF
         public bool SetMaterialTexture(Material material, int index, string prop)
         {
             if (index < 0 || index >= _textures.Count) return false;
-            Debug.Log("set material texture " + index);
+            //Debug.Log("set material texture " + index);
             if (string.IsNullOrEmpty(prop))
-            {
                 _textures[index].Load(gltf, storage, t => material.mainTexture = t);
-            }
             else
-            {
                 _textures[index].Load(gltf, storage, t => material.SetTexture(prop, t));
-            }
+
             return true;
         }
         public void AddTexture(TextureItem item)
@@ -612,17 +609,17 @@ namespace UMa.GLTF
         public void AddMaterial(Material material)
         {
             var originalName = material.name;
-            int j = 2;
+            int i = 2;
             while (_materials.Any(x => x.name == material.name))
             {
-                material.name = string.Format("{0}({1})", originalName, j++);
+                material.name = $"{originalName}({ i++})";
             }
             _materials.Add(material);
         }
-        public IList<Material> GetMaterials()
-        {
-            return _materials;
-        }
+        // public IList<Material> GetMaterials()
+        // {
+        //     return _materials;
+        // }
         public Material GetMaterial(int index)
         {
             if (index < 0 || index >= _materials.Count) return null;

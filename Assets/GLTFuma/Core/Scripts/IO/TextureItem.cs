@@ -14,32 +14,32 @@ namespace UMa.GLTF
 {
     public class TextureItem
     {
-        private int m_textureIndex;
+        private int _textureIndex;
         public Texture2D texture
         {
             get
             {
-                return m_textureLoader.Texture;
+                return _textureLoader.texture;
             }
         }
         public void Load(GLTFRoot gltf,IStorage storage, Action<Texture2D> complete){
-            Debug.Log("TextureItem Load ");
+            //Debug.Log("TextureItem Load ");
             //m_textureLoader.Load(complete);
            
             var load = StartLoad(gltf,storage,complete);
         }
         private async Task<bool> StartLoad(GLTFRoot gltf,IStorage storage,Action<Texture2D> complete)
         {
-            Debug.Log("Start Load "+m_textureIndex);
-             var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
-             Debug.Log("image index "+imageIndex);
+            //Debug.Log("Start Load "+m_textureIndex);
+            var imageIndex = gltf.GetImageIndexFromTextureIndex(_textureIndex);
+            //Debug.Log("image index "+imageIndex);
             gltf.GetImageBytes(storage, imageIndex, out var name, out var url);
-            Debug.Log("image url ... "+url);
+            //Debug.Log("image url ... "+url);
             if (string.IsNullOrEmpty(url)) return false;
             await Task.Yield();
-            Debug.LogFormat("UnityWebRequest: {0}", url);
+            //Debug.LogFormat("UnityWebRequest: {0}", url);
             var m_uwr = UnityWebRequestTexture.GetTexture(url);
-            Debug.Log("load texture ... "+url);
+            //Debug.Log("load texture ... "+url);
             var ao = m_uwr.SendWebRequest();
             // wait for request
             while (!m_uwr.isDone)
@@ -85,7 +85,7 @@ namespace UMa.GLTF
                     var textureAssetPath = AssetDatabase.GetAssetPath(texture);
                     if (!string.IsNullOrEmpty(textureAssetPath))
                     {
-                        TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+                        textureAssetPath.MarkTextureAssetAsNormalMap();
                     }
                     else
                     {
@@ -137,9 +137,9 @@ namespace UMa.GLTF
         /// <param name="index"></param>
         public TextureItem(int index)
         {
-            m_textureIndex = index;
+            _textureIndex = index;
 // #if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
-            m_textureLoader = new UnityWebRequestTextureLoader(m_textureIndex);
+            _textureLoader = new UnityWebRequestTextureLoader(_textureIndex);
 // #else
 //             m_textureLoader = new TextureLoader(m_textureIndex);
 // #endif
@@ -154,14 +154,14 @@ namespace UMa.GLTF
         /// <param name="textureName"></param>
         public TextureItem(int index, UnityPath assetPath, string textureName)
         {
-            m_textureIndex = index;
+            _textureIndex = index;
             isAsset = true;
-            m_textureLoader = new AssetTextureLoader(assetPath, textureName);
+            _textureLoader = new AssetTextureLoader(assetPath, textureName);
         }
 #endif
 
         #region Process
-        private ITextureLoader m_textureLoader;
+        private ITextureLoader _textureLoader;
 
         // public void Process(glTF gltf, IStorage storage)
         // {
@@ -177,52 +177,22 @@ namespace UMa.GLTF
 
         public void ProcessOnAnyThread(GLTFRoot gltf, IStorage storage)
         {
-            m_textureLoader.ProcessOnAnyThread(gltf, storage);
+            _textureLoader.ProcessOnAnyThread(gltf, storage);
         }
 
         public IEnumerator ProcessOnMainThreadCoroutine(GLTFRoot gltf)
         {
-            using (m_textureLoader)
+            using (_textureLoader)
             {
-                var textureType = TextureIO.GetglTFTextureType(gltf, m_textureIndex);
-                var colorSpace = TextureIO.GetColorSpace(textureType);
+                var textureType = gltf.GetTextureType(_textureIndex);
+                var colorSpace = textureType.GetColorSpace();
                 var isLinear = colorSpace == RenderTextureReadWrite.Linear;
-                yield return m_textureLoader.ProcessOnMainThread(isLinear);
-                TextureSamplerUtil.SetSampler(texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
+                yield return _textureLoader.ProcessOnMainThread(isLinear);
+                texture.SetSampler(gltf.GetSamplerFromTextureIndex(_textureIndex));
             }
         }
         #endregion
 
-        struct ColorSpaceScope : IDisposable
-        {
-            bool m_sRGBWrite;
-
-            public ColorSpaceScope(RenderTextureReadWrite colorSpace)
-            {
-                m_sRGBWrite = GL.sRGBWrite;
-                switch (colorSpace)
-                {
-                    case RenderTextureReadWrite.Linear:
-                        GL.sRGBWrite = false;
-                        break;
-
-                    case RenderTextureReadWrite.sRGB:
-                    default:
-                        GL.sRGBWrite = true;
-                        break;
-                }
-            }
-            public ColorSpaceScope(bool sRGBWrite)
-            {
-                m_sRGBWrite = GL.sRGBWrite;
-                GL.sRGBWrite = sRGBWrite;
-            }
-
-            public void Dispose()
-            {
-                GL.sRGBWrite = m_sRGBWrite;
-            }
-        }
 
 #if UNITY_EDITOR && VRM_DEVELOP
         [MenuItem("Assets/CopySRGBWrite", true)]
@@ -292,40 +262,5 @@ namespace UMa.GLTF
             GameObject.DestroyImmediate(renderTexture);
         }
 #endif
-
-        public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
-        {
-            Texture2D dst = null;
-
-            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
-
-            using (var scope = new ColorSpaceScope(colorSpace))
-            {
-                if (material != null)
-                {
-                    Graphics.Blit(src, renderTexture, material);
-                }
-                else
-                {
-                    Graphics.Blit(src, renderTexture);
-                }
-            }
-
-            dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
-            dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
-            dst.name = src.name;
-            dst.Apply();
-
-            RenderTexture.active = null;
-            if (Application.isEditor)
-            {
-                GameObject.DestroyImmediate(renderTexture);
-            }
-            else
-            {
-                GameObject.Destroy(renderTexture);
-            }
-            return dst;
-        }
     }
 }

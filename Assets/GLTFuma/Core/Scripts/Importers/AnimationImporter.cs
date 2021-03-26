@@ -321,7 +321,7 @@ namespace UMa.GLTF
 
         public void ImportAnimation(GLTFImporter importer)
         {
-            Debug.Log("import animations " + importer.gltf.animations?.Count);
+            //Debug.Log("import animations " + importer.gltf.animations?.Count);
             // animation
             if (importer.gltf.animations != null && importer.gltf.animations.Any())
             {
