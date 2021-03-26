@@ -134,5 +134,25 @@ namespace UMa.GLTF
             }
             return ((DownloadHandlerTexture)www.downloadHandler).texture;
         }
+
+        public void Dispose()
+        {
+            var keys = new string[_data.Count];
+            _data.Keys.CopyTo(keys,0);
+            for (int i = 0; i < keys.Length; i++)
+            {
+                _data.Remove(keys[i]);
+            }
+            _data = null;
+            //
+            keys = new string[_textures.Count];
+            _textures.Keys.CopyTo(keys,0);
+            for (int i = 0; i < keys.Length; i++)
+            {
+                GameObject.Destroy(_textures[keys[i]]);
+                _textures.Remove(keys[i]);
+            }
+            _textures = null;
+        }
     }
 }

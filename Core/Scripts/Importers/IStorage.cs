@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UMa.GLTF
 {
-    public interface IStorage
+    public interface IStorage:IDisposable
     {
         ArraySegment<Byte> Get(string url);
         Task<ArraySegment<byte>> Load(string url, Action<float> progress);
@@ -49,6 +49,10 @@ namespace UMa.GLTF
         {
             return null;
         }
+
+        public void Dispose()
+        {
+        }
     }
 
     public class FileSystemStorage : IStorage
@@ -90,6 +94,17 @@ namespace UMa.GLTF
         {
             if (url.StartsWith("data:")) return null;
             return Path.Combine(m_root, url).Replace("\\", "/");
+        }
+
+        public void Dispose()
+        {
+            var keys = new string[_data.Count];
+            _data.Keys.CopyTo(keys,0);
+            for (int i = 0; i < keys.Length; i++)
+            {
+                _data.Remove(keys[i]);
+            }
+            _data = null;
         }
     }
 }

@@ -394,5 +394,9 @@ namespace UMa.GLTF.Zip
         {
             return null;
         }
+
+        public void Dispose()
+        {
+        }
     }
 }
