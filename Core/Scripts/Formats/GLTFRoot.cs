@@ -239,7 +239,7 @@ namespace UMa.GLTF
             }
             else
             {
-                url = storage.GetPath(image.uri);
+                url = image.uri;
                 textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
                 return storage.Get(image.uri);
             }

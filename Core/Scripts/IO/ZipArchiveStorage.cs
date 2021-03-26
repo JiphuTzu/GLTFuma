@@ -5,6 +5,8 @@ using System.Text;
 using System.Linq;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using UnityEngine;
 
 /// <summary>
 /// https://en.wikipedia.org/wiki/Zip_(file_format)
@@ -376,8 +378,16 @@ namespace UMa.GLTF.Zip
 
             throw new NotImplementedException(found.CompressionMethod.ToString());
         }
-        public void Load(string url,Action<string> complete){
-            complete.Invoke(url);
+        public async Task<ArraySegment<byte>> Load(string url, Action<float> progress)
+        {
+            var data = Get(url);
+            await Task.Yield();
+            return data;
+        }
+        public async Task<Texture2D> LoadTexture(string url, Action<float> progress)
+        {
+            await Task.Yield();
+            return null;
         }
 
         public string GetPath(string url)
