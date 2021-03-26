@@ -112,6 +112,8 @@ namespace UMa.GLTF
                     return new AnimationKeyframeData(elementCount, null);
                 case GLTFAnimationTarget.AnimationProperty.BlendShape:
                     return new AnimationKeyframeData(elementCount, null);
+                case GLTFAnimationTarget.AnimationProperty.Active:
+                    return new AnimationKeyframeData(elementCount,null);
                 default:
                     return null;
             }

@@ -291,7 +291,23 @@ namespace UMa.GLTF
 
                             }
                             break;
+                        case GLTFAnimationTarget.PATH_ACTIVE:
+                            {
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = importer.gltf.GetArrayFromAccessor<float>(sampler.input);
+                                var output = importer.gltf.GetArrayFromAccessorAsFloat(sampler.output);
 
+                                SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "m_IsActive" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    typeof(GameObject),
+                                    (values, last) => values);
+                            }
+                            break;
                         default:
                             Debug.LogWarningFormat("unknown path: {0}", channel.target.path);
                             break;

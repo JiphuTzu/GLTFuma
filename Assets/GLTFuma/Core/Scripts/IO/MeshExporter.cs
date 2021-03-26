@@ -230,6 +230,7 @@ namespace UMa.GLTF
         {
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
+                Debug.Log("export mesh ... "+i+"/"+unityMeshes.Count);
                 var x = unityMeshes[i];
                 var mesh = x.mesh;
                 var materials = x.rendererer.sharedMaterials;

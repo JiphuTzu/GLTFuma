@@ -37,10 +37,8 @@ namespace UMa.GLTF
             var exporter = new GLTFExporter(gltf);
             exporter.Prepare(go);
             exporter.Export();
-            EditorApplication.delayCall += () =>
-            {
-                var res = SaveFiles(path, go.name, exporter);
-            };
+            Debug.Log("exported");
+            var res = SaveFiles(path, go.name, exporter);
             // return;
             // var bytes = gltf.ToGlbBytes();
             // File.WriteAllBytes(path, bytes);
@@ -61,9 +59,16 @@ namespace UMa.GLTF
                     buffers[i].uri = i == 0 ? $"{name}.bin" : $"{name}_{i}bin";
                 }
             }
-            File.WriteAllText($"{path}{Path.AltDirectorySeparatorChar}{name}.gltf", exporter.gltf.ToJson());
+            var p = $"{path}{Path.AltDirectorySeparatorChar}{name}.gltf";
+            Debug.Log("json write ..."+p);
+            var json = exporter.gltf.ToJson();
             await Task.Yield();
-            File.WriteAllBytes($"{path}{Path.AltDirectorySeparatorChar}{name}.bin", exporter.gltf.ToBinary());
+            Debug.Log(json);
+            File.WriteAllText(p, json);
+            await Task.Yield();
+            p = $"{path}{Path.AltDirectorySeparatorChar}{name}.bin";
+            Debug.Log("bin write ..."+p);
+            File.WriteAllBytes(p, exporter.gltf.ToBinary());
             await Task.Yield();
             Debug.Log("===>" + exporter.textureManager.unityTextures.Count);
             for (int i = 0; i < exporter.textureManager.unityTextures.Count; i++)
@@ -71,12 +76,13 @@ namespace UMa.GLTF
                 var ut = exporter.textureManager.unityTextures[i];
                 var tex = exporter.textureManager.GetExportTexture(i);
                 var bwm = TextureIO.GetBytesWithMime(tex, ut.TextureType);
-                var p = $"{path}{Path.AltDirectorySeparatorChar}{tex.name.ToLower()}.png";
+                p = $"{path}{Path.AltDirectorySeparatorChar}{tex.name.ToLower()}.png";
                 Debug.Log("save png " + i + " -- " + p);
                 File.WriteAllBytes(p, bwm.bytes);
                 await Task.Yield();
             }
             exporter.Dispose();
+            Debug.Log("export complete "+path);
         }
         [MenuItem("GLTFuma/ExportGLB", true, 1)]
         private static bool ExportValidate()

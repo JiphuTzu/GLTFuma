@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UniJSON;
-
+using UnityEngine;
 
 namespace UMa.GLTF
 {
@@ -12,7 +12,7 @@ namespace UMa.GLTF
         [JsonSchema(Minimum = 0)]
         public int node;
 
-        [JsonSchema(Required = true, EnumValues = new object[] { "translation", "rotation", "scale", "weights" }, EnumSerializationType = EnumSerializationType.AsString)]
+        [JsonSchema(Required = true, EnumValues = new object[] { "translation", "rotation", "scale", "weights","active" }, EnumSerializationType = EnumSerializationType.AsString)]
         public string path;
 
         // empty schemas
@@ -40,6 +40,7 @@ namespace UMa.GLTF
         public const string PATH_ROTATION = "rotation";
         public const string PATH_SCALE = "scale";
         public const string PATH_WEIGHT = "weights";
+        public const string PATH_ACTIVE = "active";
         public const string NOT_IMPLEMENTED = "NotImplemented";
 
         public enum AnimationProperty
@@ -50,6 +51,7 @@ namespace UMa.GLTF
             Scale,
             Weight,
             BlendShape,
+            Active,
 
             NotImplemented
         }
@@ -67,6 +69,8 @@ namespace UMa.GLTF
                     return PATH_SCALE;
                 case AnimationProperty.BlendShape:
                     return PATH_WEIGHT;
+                case AnimationProperty.Active:
+                    return PATH_ACTIVE;
                 default: throw new NotImplementedException();
             }
         }
@@ -83,7 +87,9 @@ namespace UMa.GLTF
                     return AnimationProperty.Scale;
                 case PATH_WEIGHT:
                     return AnimationProperty.BlendShape;
-                default: throw new NotImplementedException();
+                case PATH_ACTIVE:
+                    return AnimationProperty.Active;
+                default: throw new NotImplementedException(path);
             }
         }
 
@@ -96,6 +102,7 @@ namespace UMa.GLTF
                 case AnimationProperty.Rotation: return 4;
                 case AnimationProperty.Scale: return 3;
                 case AnimationProperty.BlendShape: return 1;
+                case AnimationProperty.Active: return 1;
                 default: throw new NotImplementedException();
             }
         }
@@ -174,7 +181,7 @@ namespace UMa.GLTF
             {
                 f.KeyValue(() => name);
             }
-
+            Debug.Log(channels.Count+" -- "+samplers.Count);
             f.KeyValue(() => channels);
             f.KeyValue(() => samplers);
         }

@@ -85,6 +85,9 @@ namespace UMa.GLTF
             {
                 return GLTFAnimationTarget.AnimationProperty.BlendShape;
             }
+            else if(property.StartsWith("m_IsActive")){
+                return GLTFAnimationTarget.AnimationProperty.Active;
+            }
             else
             {
                 return GLTFAnimationTarget.AnimationProperty.NotImplemented;
@@ -93,6 +96,7 @@ namespace UMa.GLTF
 
         public static int GetElementOffset(string property)
         {
+
             if (property.EndsWith(".x"))
             {
                 return 0;
@@ -109,9 +113,13 @@ namespace UMa.GLTF
             {
                 return 3;
             }
+            if(property.StartsWith("m_IsActive"))
+            {
+                return 0;
+            }
             else
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException(property);
             }
         }
 
@@ -126,7 +134,6 @@ namespace UMa.GLTF
             var bindings = AnimationUtility.GetCurveBindings(clip);
             foreach (var binding in bindings)
             {
-                var curve = AnimationUtility.GetEditorCurve(clip, binding);
 
                 var property = AnimationExporter.PropertyToTarget(binding.propertyName);
                 if (property == GLTFAnimationTarget.AnimationProperty.NotImplemented)
@@ -139,6 +146,7 @@ namespace UMa.GLTF
                     Debug.LogWarning("Interpolation setting of AnimationClip should be Quaternion");
                     continue;
                 }
+                var curve = AnimationUtility.GetEditorCurve(clip, binding);
 
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
                 var samplerIndex = animation.animation.AddChannelAndGetSampler(nodeIndex, property);
@@ -152,6 +160,7 @@ namespace UMa.GLTF
                 {
                     elementCount = GLTFAnimationTarget.GetElementCount(property);
                 }
+                Debug.Log("export animation binding ... "+nodeIndex+" == "+elementCount);
 
                 // 同一のsamplerIndexが割り当てられているcurveDataがある場合はそれを使用し、無ければ作る
                     var curveData = curveDatas.FirstOrDefault(x => x.samplerIndex == samplerIndex);

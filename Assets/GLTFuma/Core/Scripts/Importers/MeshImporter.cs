@@ -98,12 +98,7 @@ namespace UMa.GLTF
 
             if (meshContext.positions.Length > UInt16.MaxValue)
             {
-#if UNITY_2017_3_OR_NEWER
                 mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-#else
-                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports large mesh",
-                    meshContext.positions.Length);
-#endif
             }
 
             mesh.vertices = meshContext.positions;
@@ -247,17 +242,7 @@ namespace UMa.GLTF
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
-//                     if (ctx.IsGeneratedGLTFumaAndOlder(1, 16))
-//                     {
-// #pragma warning disable 0612
-//                         // backward compatibility
-//                         uv.AddRange(ctx.gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
-// #pragma warning restore 0612
-//                     }
-//                     else
-//                     {
                         uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseUV()));
-                    // }
                 }
                 else
                 {

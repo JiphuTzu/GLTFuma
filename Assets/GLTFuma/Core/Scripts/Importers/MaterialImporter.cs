@@ -1,10 +1,5 @@
 ﻿using UnityEngine;
-using System;
-using UnityEngine.Rendering;
 using UniGLTF.UniUnlit;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 namespace UMa.GLTF

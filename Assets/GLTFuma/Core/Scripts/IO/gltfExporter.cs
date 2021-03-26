@@ -118,8 +118,8 @@ namespace UMa.GLTF
                 scale = x.transform.localScale.ToArray(),
             };
 
-            if (x.gameObject.activeInHierarchy)
-            {
+            // if (x.gameObject.activeInHierarchy)
+            // {
                 var meshFilter = x.GetComponent<MeshFilter>();
                 if (meshFilter != null)
                 {
@@ -132,7 +132,7 @@ namespace UMa.GLTF
                     node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
                     node.skin = skins.IndexOf(skinnredMeshRenderer);
                 }
-            }
+            // }
 
             return node;
         }
@@ -196,6 +196,7 @@ namespace UMa.GLTF
                         return true;
                     })
                     .ToList();
+                Debug.Log("unityMesher...."+unityMeshes.Count);
                 MeshExporter.ExportMeshes(gltf, bufferIndex, unityMeshes, materials, useSparseAccessorForMorphTarget);
                 meshes = unityMeshes.Select(x => x.mesh).ToList();
                 #endregion
@@ -256,6 +257,7 @@ namespace UMa.GLTF
 
                 if (clips.Any())
                 {
+                    Debug.Log("export clips.."+clips.Count);
                     foreach (AnimationClip clip in clips)
                     {
                         var animationWithCurve = AnimationExporter.Export(clip, go.transform, nodes);
@@ -263,12 +265,12 @@ namespace UMa.GLTF
                         foreach (var kv in animationWithCurve.samplers)
                         {
                             var sampler = animationWithCurve.animation.samplers[kv.Key];
-
                             var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.input);
                             sampler.input = inputAccessorIndex;
 
                             var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.output);
                             sampler.output = outputAccessorIndex;
+                            Debug.Log(sampler.interpolation+">>"+string.Join(",",kv.Value.output));
 
                             // modify accessors
                             var outputAccessor = gltf.accessors[outputAccessorIndex];
