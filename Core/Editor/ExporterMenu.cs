@@ -75,7 +75,7 @@ namespace UMa.GLTF
             {
                 var ut = exporter.textureManager.unityTextures[i];
                 var tex = exporter.textureManager.GetExportTexture(i);
-                var bwm = tex.GetBytesWithMime(ut.TextureType);
+                var bwm = tex.GetBytesWithMime(ut.TextureType,0);
                 p = $"{path}{Path.AltDirectorySeparatorChar}{tex.name.ToLower()}.png";
                 Debug.Log("save png " + i + " -- " + p);
                 File.WriteAllBytes(p, bwm.bytes);

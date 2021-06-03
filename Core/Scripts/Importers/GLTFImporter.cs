@@ -85,21 +85,21 @@ namespace UMa.GLTF
         }
 
         private IMaterialImporter _materialImporter;
-        public IMaterialImporter materialImporter
-        {
-            get
-            {
-                if (_materialImporter == null)
-                {
-                    _materialImporter = new MaterialImporter(shaderStore, this);
-                }
-                return _materialImporter;
-            }
-            set
-            {
-                _materialImporter = value;
-            }
-        }
+        // public IMaterialImporter materialImporter
+        // {
+        //     get
+        //     {
+        //         if (_materialImporter == null)
+        //         {
+        //             _materialImporter = new MaterialImporter(shaderStore, this);
+        //         }
+        //         return _materialImporter;
+        //     }
+        //     set
+        //     {
+        //         _materialImporter = value;
+        //     }
+        // }
         private IMeshImporter _meshImporter;
         private INodeImporter _nodeImporter;
         private IAnimationImporter _animationImporter;
@@ -495,13 +495,13 @@ namespace UMa.GLTF
             {
                 if (gltf.materials == null || !gltf.materials.Any())
                 {
-                    AddMaterial(materialImporter.CreateMaterial(0, null));
+                    AddMaterial(_materialImporter.CreateMaterial(0, null));
                 }
                 else
                 {
                     for (int i = 0; i < gltf.materials.Count; ++i)
                     {
-                        AddMaterial(materialImporter.CreateMaterial(i, gltf.materials[i]));
+                        AddMaterial(_materialImporter.CreateMaterial(i, gltf.materials[i]));
                     }
                 }
             }
@@ -568,7 +568,7 @@ namespace UMa.GLTF
                     t.SetParent(root.transform, false);
                 }
             }
-            //Debug.Log("root .... "+root);
+            Debug.Log("root .... "+root);
             await Task.Yield();
         }
 
