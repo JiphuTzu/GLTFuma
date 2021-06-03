@@ -176,7 +176,7 @@ namespace UMa.GLTF
                     return child;
                 }
             }
-
+            Debug.Log(">>>>"+childName);
             throw new KeyNotFoundException();
         }
 

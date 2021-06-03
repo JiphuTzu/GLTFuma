@@ -117,31 +117,39 @@ namespace UMa.GLTF
             public string mime;
         }
 
-        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType)
+        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType, int mimeType = 0,int quality = 75)
         {
-#if UNITY_EDITOR
-            var path = UnityPath.FromAsset(texture);
-            if (path.isUnderAssetsFolder)
+            // #if UNITY_EDITOR
+            //             var path = UnityPath.FromAsset(texture);
+            //             if (path.isUnderAssetsFolder)
+            //             {
+            //                 if (path.extension == ".png")
+            //                 {
+            //                     return new BytesWithMime
+            //                     {
+            //                         bytes = System.IO.File.ReadAllBytes(path.fullPath),
+            //                         mime = "image/png"
+            //                     };
+            //                 }
+            //             }
+            // #endif
+            if (mimeType == 0)
             {
-                if (path.extension == ".png")
-                {
-                    return new BytesWithMime
-                    {
-                        bytes = System.IO.File.ReadAllBytes(path.fullPath),
-                        mime = "image/png"
-                    };
-                }
-            }
-#endif
 
+                return new BytesWithMime
+                {
+                    bytes = texture.CopyTexture(textureType.GetColorSpace(), null).EncodeToPNG(),
+                    mime = "image/png"
+                };
+            }
             return new BytesWithMime
             {
-                bytes = texture.CopyTexture(textureType.GetColorSpace(), null).EncodeToPNG(),
-                mime = "image/png"
+                bytes = texture.CopyTexture(textureType.GetColorSpace(), null).EncodeToJPG(quality),
+                mime = "image/jpeg"
             };
         }
 
-        public static int ExportTexture(this GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType)
+        public static int ExportTexture(this GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType, int mimeType=0)
         {
             //var bytesWithMime = GetBytesWithMime(texture, textureType); ;
 
@@ -154,7 +162,7 @@ namespace UMa.GLTF
             var image = new GLTFImage
             {
                 name = texture.name,
-                mimeType = "image/png"//bytesWithMime.mime,
+                mimeType = mimeType == 0 ? "image/png" : "image/jpeg"
             };
             //bufferView = viewIndex,
             image.uri = texture.name.ToLower() + image.GetExt().ToLower();
@@ -191,11 +199,11 @@ namespace UMa.GLTF
                     Graphics.Blit(src, renderTexture);
                 }
             }
-
-            dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
-            dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+            dst = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
+            dst.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
             dst.name = src.name;
             dst.Apply();
+            Debug.Log(dst.width + "x" + dst.height);
 
             RenderTexture.active = null;
             if (Application.isEditor)

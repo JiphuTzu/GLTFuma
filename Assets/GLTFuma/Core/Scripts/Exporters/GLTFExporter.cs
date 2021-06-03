@@ -96,9 +96,9 @@ namespace UMa.GLTF
             copy.transform.ReverseZRecursive();
         }
 
-        public void Export()
+        public void Export(int textureFormat = 0)
         {
-            FromGameObject(gltf, copy, useSparseAccessorForBlendShape);
+            FromGameObject(gltf, copy, useSparseAccessorForBlendShape,textureFormat);
         }
 
         public void Dispose()
@@ -144,7 +144,7 @@ namespace UMa.GLTF
             return node;
         }
 
-        void FromGameObject(GLTFRoot gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
+        void FromGameObject(GLTFRoot gltf, GameObject go, bool useSparseAccessorForMorphTarget = false,int textureFormat = 0)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -172,7 +172,7 @@ namespace UMa.GLTF
                 Debug.Log("image count = " + unityTextures.Count);
                 for (int i = 0; i < unityTextures.Count; ++i)
                 {
-                    gltf.ExportTexture(bufferIndex, textureManager.GetExportTexture(i), unityTextures[i].TextureType);
+                    gltf.ExportTexture(bufferIndex, textureManager.GetExportTexture(i), unityTextures[i].TextureType,textureFormat);
                 }
                 #endregion
 
