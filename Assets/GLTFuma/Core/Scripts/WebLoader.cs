@@ -20,6 +20,7 @@ namespace UMa.GLTF
         //public string url = "http://72studio.jcsureyes.com/presenting/presenting.gltf";
         public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
         public bool loadOnStart = false;
+        public bool showWithTexture = false;
         private GLTFImporter _loader;
         private IStorage _storage;
         private void Start()
@@ -49,21 +50,25 @@ namespace UMa.GLTF
             //加载buffers里面的.bin数据
             int total = _loader.gltf.buffers.Count;
             int current = 0;
+            var stepPrecent = showWithTexture ? 0.4f : 0.8f;
             foreach (var buffer in _loader.gltf.buffers)
             {
                 Debug.Log(buffer.uri);
-                await _storage.Load(buffer.uri, p => progress?.Invoke(0.1f + 0.8f * (current + p) / total));
+                await _storage.Load(buffer.uri, p => progress?.Invoke(0.1f + stepPrecent * (current + p) / total));
                 //Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(_storage);
                 current++;
             }
             //跳过图片的加载
-            //total = _loader.GLTF.images.Count;
-            // foreach (var image in _loader.GLTF.images)
-            // {
-            //     yield return storage.Load(image.uri, p => progress?.Invoke(0.5f + 0.4f * (current + p) / total));
-            //     current++;
-            // }
+            if (showWithTexture)
+            {
+                total = _loader.gltf.images.Count;
+                foreach (var image in _loader.gltf.images)
+                {
+                    await _storage.LoadTexture(image.uri, p => progress?.Invoke(0.5f + 0.4f * (current + p) / total));
+                    current++;
+                }
+            }
             //解析mesh、material、animation等数据
             await _loader.Load(_storage, p => progress?.Invoke(0.9f + p * 0.1f));
             //loader.Parse(url,www.downloadHandler.data);
