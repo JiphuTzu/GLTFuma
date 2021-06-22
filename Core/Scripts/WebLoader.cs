@@ -35,9 +35,13 @@ namespace UMa.GLTF
         {
             this.url = url;
             _storage = storage;
-            var res = Load(progress, complete);
+            var task = Load(progress);
+            if (complete != null)
+            {
+                task.GetAwaiter().OnCompleted(() => complete.Invoke(task.Result));
+            }
         }
-        private async Task Load(Action<float> progress, Action<GameObject> complete)
+        private async Task<GameObject> Load(Action<float> progress)
         {
             var name = url.Substring(url.LastIndexOf("/") + 1);
             //加载.gltf文件
@@ -62,6 +66,7 @@ namespace UMa.GLTF
             //跳过图片的加载
             if (showWithTexture)
             {
+                current = 0;
                 total = _loader.gltf.images.Count;
                 foreach (var image in _loader.gltf.images)
                 {
@@ -76,7 +81,7 @@ namespace UMa.GLTF
             _loader.root.SetActive(false);
             _loader.root.transform.SetParent(transform);
             _loader.root.SetActive(true);
-            complete?.Invoke(_loader.root);
+            return _loader.root;
         }
         public void Unload()
         {
