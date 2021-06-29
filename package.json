@@ -1,6 +1,6 @@
 {
     "name": "com.uma.gltfuma",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "displayName": "GLTFuma",
     "description": "gltf importer and exporter.",
     "unity": "2019.3",
