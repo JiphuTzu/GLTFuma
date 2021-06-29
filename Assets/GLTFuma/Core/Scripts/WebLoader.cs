@@ -23,6 +23,7 @@ namespace UMa.GLTF
         public bool showWithTexture = false;
         private GLTFImporter _loader;
         private IStorage _storage;
+        private Task<GameObject> _loadTask;
         private void Start()
         {
             if (loadOnStart && !string.IsNullOrEmpty(url))
@@ -35,11 +36,13 @@ namespace UMa.GLTF
         {
             this.url = url;
             _storage = storage;
-            var task = Load(progress);
-            if (complete != null)
+            if (_loadTask != null) _loadTask.Dispose();
+            _loadTask = Load(progress);
+            _loadTask.GetAwaiter().OnCompleted(() =>
             {
-                task.GetAwaiter().OnCompleted(() => complete.Invoke(task.Result));
-            }
+                complete?.Invoke(_loadTask.Result);
+                _loadTask = null;
+            });
         }
         private async Task<GameObject> Load(Action<float> progress)
         {
@@ -94,6 +97,11 @@ namespace UMa.GLTF
             {
                 _storage.Dispose();
                 _storage = null;
+            }
+            if (_loadTask != null)
+            {
+                _loadTask.Dispose();
+                _loadTask = null;
             }
         }
     }
