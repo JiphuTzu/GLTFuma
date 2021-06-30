@@ -45,6 +45,8 @@ namespace UMa.GLTF
         }
         private async Task<GameObject> Load(Action<float> progress)
         {
+            await Task.Yield();
+            _unloaded = false;
             var name = url.Substring(url.LastIndexOf("/") + 1);
             //加载.gltf文件
             await _storage.Load(name, p => progress?.Invoke(p * 0.1f));
