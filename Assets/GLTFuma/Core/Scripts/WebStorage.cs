@@ -20,11 +20,12 @@ namespace UMa.GLTF
         private Dictionary<string, ArraySegment<byte>> _data;
         private Dictionary<string, Texture2D> _textures;
         private Dictionary<string, Action<float>> _progress;
+        private bool _disposed = false;
         public WebStorage(string root)
         {
             if (!root.StartsWith("http") && !root.StartsWith("file"))
             {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
                 root = "jar://"+root;
 #else
                 root = "file://" + root;
@@ -111,6 +112,7 @@ namespace UMa.GLTF
             {
                 _progress[url].Invoke(ao.progress);
                 await Task.Yield();
+                if(_disposed) return null;
             }
             if(!string.IsNullOrEmpty(www.error)){
                 Debug.Log("load fail :: "+path);
@@ -128,6 +130,7 @@ namespace UMa.GLTF
                 //Debug.Log(url+"..."+ao.progress);
                 _progress[url].Invoke(ao.progress);
                 await Task.Yield();
+                if(_disposed) return null;
             }
             if(!string.IsNullOrEmpty(www.error)){
                 Debug.Log("load fail :: "+path);
@@ -153,6 +156,7 @@ namespace UMa.GLTF
                 _textures.Remove(keys[i]);
             }
             _textures = null;
+            _disposed = true;
         }
     }
 }
