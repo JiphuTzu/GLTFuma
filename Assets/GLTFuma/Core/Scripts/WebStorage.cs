@@ -39,6 +39,7 @@ namespace UMa.GLTF
         }
         public async Task<ArraySegment<byte>> Load(string url, Action<float> progress)
         {
+            if(_disposed) return new ArraySegment<byte>();
             if (!_data.ContainsKey(url))
             {
                 //正在加载中
@@ -49,12 +50,14 @@ namespace UMa.GLTF
                     while (!_data.ContainsKey(url))
                     {
                         await Task.Yield();
+                        if(_disposed) return new ArraySegment<byte>();
                     }
                 }
                 else
                 {
                     _progress.Add(url,progress);
                     var data = await LoadData(url);
+                    if(_disposed) return new ArraySegment<byte>();
                     _data.Add(url, new ArraySegment<byte>(data));
                     _progress.Remove(url);
                 }
@@ -63,6 +66,7 @@ namespace UMa.GLTF
         }
         public async Task<Texture2D> LoadTexture(string url, Action<float> progress)
         {
+            if(_disposed) return null;
             if (!_textures.ContainsKey(url))
             {
                 //正在加载中
@@ -73,6 +77,7 @@ namespace UMa.GLTF
                     while (!_textures.ContainsKey(url))
                     {
                         await Task.Yield();
+                        if(_disposed) return null;
                     }
                 }
                 else
@@ -80,6 +85,7 @@ namespace UMa.GLTF
                     // Debug.Log("load texture ...");
                     _progress.Add(url,progress);
                     var data = await LoadTexture(url);
+                    if(_disposed) return null;
                     _textures.Add(url, data);
                     _progress.Remove(url);
                 }
@@ -94,7 +100,7 @@ namespace UMa.GLTF
             }
             if (_data.ContainsKey(url)) return _data[url];
             //Debug.Log("get storage ... "+url + " ======= "+bytes.Length);
-            return new ArraySegment<byte>(new byte[0]);
+            return new ArraySegment<byte>();
         }
 
         public string GetPath(string url)
