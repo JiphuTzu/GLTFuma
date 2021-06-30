@@ -23,7 +23,7 @@ namespace UMa.GLTF
         public bool showWithTexture = false;
         private GLTFImporter _loader;
         private IStorage _storage;
-        private Task<GameObject> _loadTask;
+        private bool _unloaded = false;
         private void Start()
         {
             if (loadOnStart && !string.IsNullOrEmpty(url))
@@ -36,12 +36,11 @@ namespace UMa.GLTF
         {
             this.url = url;
             _storage = storage;
-            if (_loadTask != null) _loadTask.Dispose();
-            _loadTask = Load(progress);
-            _loadTask.GetAwaiter().OnCompleted(() =>
+            var task = Load(progress);
+            task.GetAwaiter().OnCompleted(() =>
             {
-                complete?.Invoke(_loadTask.Result);
-                _loadTask = null;
+                if (task.Result != null && complete != null)
+                    complete.Invoke(task.Result);
             });
         }
         private async Task<GameObject> Load(Action<float> progress)
@@ -49,7 +48,7 @@ namespace UMa.GLTF
             var name = url.Substring(url.LastIndexOf("/") + 1);
             //加载.gltf文件
             await _storage.Load(name, p => progress?.Invoke(p * 0.1f));
-
+            if (_unloaded) return null;
             _loader = new GLTFImporter();
             //Debug.Log(www.downloadHandler.text);
             //用JsonUtility解析到gltf数据
@@ -62,6 +61,7 @@ namespace UMa.GLTF
             {
                 Debug.Log(buffer.uri);
                 await _storage.Load(buffer.uri, p => progress?.Invoke(0.1f + stepPrecent * (current + p) / total));
+                if (_unloaded) return null;
                 //Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(_storage);
                 current++;
@@ -75,10 +75,12 @@ namespace UMa.GLTF
                 {
                     await _storage.LoadTexture(image.uri, p => progress?.Invoke(0.5f + 0.4f * (current + p) / total));
                     current++;
+                    if (_unloaded) return null;
                 }
             }
             //解析mesh、material、animation等数据
             await _loader.Load(_storage, p => progress?.Invoke(0.9f + p * 0.1f));
+            if (_unloaded) return null;
             //loader.Parse(url,www.downloadHandler.data);
             _loader.ShowMeshes();
             _loader.root.SetActive(false);
@@ -88,6 +90,7 @@ namespace UMa.GLTF
         }
         public void Unload()
         {
+            _unloaded = true;
             if (_loader != null)
             {
                 _loader.Dispose();
@@ -97,11 +100,6 @@ namespace UMa.GLTF
             {
                 _storage.Dispose();
                 _storage = null;
-            }
-            if (_loadTask != null)
-            {
-                _loadTask.Dispose();
-                _loadTask = null;
             }
         }
     }
