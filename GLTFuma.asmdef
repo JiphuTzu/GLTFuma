@@ -2,7 +2,6 @@
     "name": "UMAGLTF",
     "rootNamespace": "",
     "references": [
-        "GUID:d2ba993c316e34f4e9a015276f834af9",
         "GUID:4bbc20878b5e84f7396c2273c87f3558"
     ],
     "includePlatforms": [],

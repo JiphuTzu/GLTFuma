@@ -11,7 +11,7 @@ namespace UMa.GLTF
 
         public void OpenStorage(IStorage storage)
         {
-            _storage = new ArraySegmentByteBuffer(storage.Get(uri));
+            _storage = new ArraySegmentByteBuffer(storage.GetBinary(uri));
             /*
             if (string.IsNullOrEmpty(uri))
             {
