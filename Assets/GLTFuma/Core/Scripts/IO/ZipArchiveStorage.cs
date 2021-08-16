@@ -359,7 +359,7 @@ namespace UMa.GLTF.Zip
             }
         }
 
-        public ArraySegment<byte> Get(string url)
+        public ArraySegment<byte> GetBinary(string url)
         {
             var found = Entries.FirstOrDefault(x => x.FileName == url);
             if (found == null)
@@ -378,9 +378,9 @@ namespace UMa.GLTF.Zip
 
             throw new NotImplementedException(found.CompressionMethod.ToString());
         }
-        public async Task<ArraySegment<byte>> Load(string url, Action<float> progress)
+        public async Task<ArraySegment<byte>> LoadBinary(string url, Action<float> progress)
         {
-            var data = Get(url);
+            var data = GetBinary(url);
             await Task.Yield();
             return data;
         }
@@ -397,6 +397,17 @@ namespace UMa.GLTF.Zip
 
         public void Dispose()
         {
+        }
+
+        public string GetString(string url)
+        {
+            return string.Empty;
+        }
+
+        public async Task<string> LoadString(string url, Action<float> progress)
+        {
+            await Task.Yield();
+            return string.Empty;
         }
     }
 }

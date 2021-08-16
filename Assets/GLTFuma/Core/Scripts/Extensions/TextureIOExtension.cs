@@ -117,8 +117,26 @@ namespace UMa.GLTF
             public string mime;
         }
 
-        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType, int mimeType = 0,int quality = 75)
+        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType, int mimeType = 0,int quality = 75,int size=0)
         {
+            var tex = texture.CopyTexture(textureType.GetColorSpace(), null);
+            if(size>1){
+                    tex.Resize(size,size);
+                    tex.Apply();
+            }
+            if (mimeType == 0)
+            {
+                return new BytesWithMime
+                {
+                    bytes = tex.EncodeToPNG(),
+                    mime = "image/png"
+                };
+            }
+            return new BytesWithMime
+            {
+                bytes = tex.EncodeToJPG(quality),
+                mime = "image/jpeg"
+            };
             // #if UNITY_EDITOR
             //             var path = UnityPath.FromAsset(texture);
             //             if (path.isUnderAssetsFolder)
@@ -133,20 +151,6 @@ namespace UMa.GLTF
             //                 }
             //             }
             // #endif
-            if (mimeType == 0)
-            {
-
-                return new BytesWithMime
-                {
-                    bytes = texture.CopyTexture(textureType.GetColorSpace(), null).EncodeToPNG(),
-                    mime = "image/png"
-                };
-            }
-            return new BytesWithMime
-            {
-                bytes = texture.CopyTexture(textureType.GetColorSpace(), null).EncodeToJPG(quality),
-                mime = "image/jpeg"
-            };
         }
 
         public static int ExportTexture(this GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType, int mimeType=0)
@@ -184,8 +188,6 @@ namespace UMa.GLTF
         }
         public static Texture2D CopyTexture(this Texture src, RenderTextureReadWrite colorSpace, Material material)
         {
-            Texture2D dst = null;
-
             var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
 
             using (var scope = new ColorSpaceScope(colorSpace))
@@ -199,11 +201,10 @@ namespace UMa.GLTF
                     Graphics.Blit(src, renderTexture);
                 }
             }
-            dst = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
+            var dst = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
             dst.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
             dst.name = src.name;
             dst.Apply();
-            Debug.Log(dst.width + "x" + dst.height);
 
             RenderTexture.active = null;
             if (Application.isEditor)

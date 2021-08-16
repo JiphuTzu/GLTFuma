@@ -6,9 +6,6 @@ using System.IO;
 using System.Text;
 using System.Collections;
 using System.Threading.Tasks;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 namespace UMa.GLTF
@@ -129,7 +126,7 @@ namespace UMa.GLTF
         /// <summary>
         /// JSON source
         /// </summary>
-        public string json;
+        //public string json;
 
         /// <summary>
         /// GLTF parsed from JSON
@@ -242,17 +239,17 @@ namespace UMa.GLTF
 
         public virtual void ParseJson(string json, IStorage storage)
         {
-            this.json = json;
+            //this.json = json;
             this.storage = storage;
 
-            gltf = JsonUtility.FromJson<GLTFRoot>(this.json);
+            gltf = JsonUtility.FromJson<GLTFRoot>(json);
             if (gltf.asset.version != "2.0")
             {
                 throw new GLTFumaException("unknown gltf version {0}", gltf.asset.version);
             }
 
             // Version Compatibility
-            RestoreOlderVersionValues();
+            //RestoreOlderVersionValues();
 
             // parepare byte buffer
             //GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
@@ -263,85 +260,78 @@ namespace UMa.GLTF
         }
         public virtual void ParseJson(string json)
         {
-            this.json = json;
+            //this.json = json;
 
-            gltf = JsonUtility.FromJson<GLTFRoot>(this.json);
+            gltf = JsonUtility.FromJson<GLTFRoot>(json);
             if (gltf.asset.version != "2.0")
             {
                 throw new GLTFumaException("unknown gltf version {0}", gltf.asset.version);
             }
 
             // Version Compatibility
-            RestoreOlderVersionValues();
-
-            // parepare byte buffer
-            //GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
-            // foreach (var buffer in GLTF.buffers)
-            // {
-            //     buffer.OpenStorage(storage);
-            // }
+            //RestoreOlderVersionValues();
         }
 
-        private void RestoreOlderVersionValues()
-        {
-            var parsed = UniJSON.JsonParser.Parse(json);
-            for (int i = 0; i < gltf.images.Count; ++i)
-            {
-                if (string.IsNullOrEmpty(gltf.images[i].name))
-                {
-                    try
-                    {
-                        var extraName = parsed["images"][i]["extra"]["name"].Value.GetString();
-                        if (!string.IsNullOrEmpty(extraName))
-                        {
-                            //Debug.LogFormat("restore texturename: {0}", extraName);
-                            gltf.images[i].name = extraName;
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // do nothing
-                    }
-                }
-            }
-            for (int i = 0; i < gltf.meshes.Count; ++i)
-            {
-                var mesh = gltf.meshes[i];
-                try
-                {
-                    for (int j = 0; j < mesh.primitives.Count; ++j)
-                    {
-                        var primitive = mesh.primitives[j];
-                        for (int k = 0; k < primitive.targets.Count; ++k)
-                        {
-                            var extraName = parsed["meshes"][i]["primitives"][j]["targets"][k]["extra"]["name"].Value.GetString();
-                            //Debug.LogFormat("restore morphName: {0}", extraName);
-                            primitive.extras.targetNames.Add(extraName);
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    // do nothing
-                }
-            }
-#if false
-            for (int i = 0; i < GLTF.nodes.Count; ++i)
-            {
-                var node = GLTF.nodes[i];
-                try
-                {
-                    var extra = parsed["nodes"][i]["extra"]["skinRootBone"].AsInt;
-                    //Debug.LogFormat("restore extra: {0}", extra);
-                    //node.extras.skinRootBone = extra;
-                }
-                catch (Exception)
-                {
-                    // do nothing
-                }
-            }
-#endif
-        }
+//         private void RestoreOlderVersionValues()
+//         {
+//             var parsed = UniJSON.JsonParser.Parse(json);
+//             for (int i = 0; i < gltf.images.Count; ++i)
+//             {
+//                 if (string.IsNullOrEmpty(gltf.images[i].name))
+//                 {
+//                     try
+//                     {
+//                         var extraName = parsed["images"][i]["extra"]["name"].Value.GetString();
+//                         if (!string.IsNullOrEmpty(extraName))
+//                         {
+//                             //Debug.LogFormat("restore texturename: {0}", extraName);
+//                             gltf.images[i].name = extraName;
+//                         }
+//                     }
+//                     catch (Exception)
+//                     {
+//                         // do nothing
+//                     }
+//                 }
+//             }
+//             for (int i = 0; i < gltf.meshes.Count; ++i)
+//             {
+//                 var mesh = gltf.meshes[i];
+//                 try
+//                 {
+//                     for (int j = 0; j < mesh.primitives.Count; ++j)
+//                     {
+//                         var primitive = mesh.primitives[j];
+//                         for (int k = 0; k < primitive.targets.Count; ++k)
+//                         {
+//                             var extraName = parsed["meshes"][i]["primitives"][j]["targets"][k]["extra"]["name"].Value.GetString();
+//                             //Debug.LogFormat("restore morphName: {0}", extraName);
+//                             primitive.extras.targetNames.Add(extraName);
+//                         }
+//                     }
+//                 }
+//                 catch (Exception)
+//                 {
+//                     // do nothing
+//                 }
+//             }
+// #if false
+//             for (int i = 0; i < GLTF.nodes.Count; ++i)
+//             {
+//                 var node = GLTF.nodes[i];
+//                 try
+//                 {
+//                     var extra = parsed["nodes"][i]["extra"]["skinRootBone"].AsInt;
+//                     //Debug.LogFormat("restore extra: {0}", extra);
+//                     //node.extras.skinRootBone = extra;
+//                 }
+//                 catch (Exception)
+//                 {
+//                     // do nothing
+//                 }
+//             }
+// #endif
+//         }
         #endregion
 
         public void CreateTextureItems(UnityPath imageBaseDir = default(UnityPath))

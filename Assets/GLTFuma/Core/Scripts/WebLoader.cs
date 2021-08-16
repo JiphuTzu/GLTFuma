@@ -1,8 +1,7 @@
 using System;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Events;
 //============================================================
 //支持中文，文件使用UTF-8编码
 //@author	JiphuTzu
@@ -13,14 +12,20 @@ using UnityEngine.UI;
 //============================================================
 namespace UMa.GLTF
 {
-    public class WebLoader : MonoBehaviour
+    public class WebLoader : MonoBehaviour,IShaderStore
     {
-        public Text text;
+        [Serializable]
+        public class ProgressEvent : UnityEvent<float> { }
+        [Serializable]
+        public class CompleteEvent : UnityEvent<GameObject> { }
         //http://72studio.jcsureyes.com/202103241648111/Baseball.gltf
         //public string url = "http://72studio.jcsureyes.com/presenting/presenting.gltf";
-        public string url = "http://47.92.208.125:8080/files/BrainStem/BrainStem.gltf";
+        public string url;
         public bool loadOnStart = false;
         public bool showWithTexture = false;
+        public string defaultShaderName = "Standard";
+        public ProgressEvent onProgress = new ProgressEvent();
+        public CompleteEvent onComplete = new CompleteEvent();
         private GLTFImporter _loader;
         private IStorage _storage;
         private bool _unloaded = false;
@@ -29,9 +34,21 @@ namespace UMa.GLTF
             if (loadOnStart && !string.IsNullOrEmpty(url))
             {
                 var storage = new WebStorage(url.Substring(0, url.LastIndexOf("/")));
-                Load(url, storage, p => text.text = $"{p * 100:f2}%", null);
+                Load(url, storage);
             }
         }
+        public void Load(string url, IStorage storage)
+        {
+            this.url = url;
+            _storage = storage;
+            var task = Load(onProgress.Invoke);
+            task.GetAwaiter().OnCompleted(() =>
+            {
+                if (task.Result != null)
+                    onComplete.Invoke(task.Result);
+            });
+        }
+        [Obsolete("Will remove at v0.4.0")]
         public void Load(string url, IStorage storage, Action<float> progress, Action<GameObject> complete)
         {
             this.url = url;
@@ -49,12 +66,11 @@ namespace UMa.GLTF
             _unloaded = false;
             var name = url.Substring(url.LastIndexOf("/") + 1);
             //加载.gltf文件
-            await _storage.Load(name, p => progress?.Invoke(p * 0.1f));
+            await _storage.LoadString(name, p => progress?.Invoke(p * 0.1f));
             if (_unloaded) return null;
-            _loader = new GLTFImporter();
-            //Debug.Log(www.downloadHandler.text);
+            _loader = new GLTFImporter(this,null,null,null,null);
             //用JsonUtility解析到gltf数据
-            _loader.ParseJson(Encoding.UTF8.GetString(_storage.Get(name).ToArray()));
+            _loader.ParseJson(_storage.GetString(name));
             //加载buffers里面的.bin数据
             int total = _loader.gltf.buffers.Count;
             int current = 0;
@@ -62,7 +78,7 @@ namespace UMa.GLTF
             foreach (var buffer in _loader.gltf.buffers)
             {
                 Debug.Log(buffer.uri);
-                await _storage.Load(buffer.uri, p => progress?.Invoke(0.1f + stepPrecent * (current + p) / total));
+                await _storage.LoadBinary(buffer.uri, p => progress?.Invoke(0.1f + stepPrecent * (current + p) / total));
                 if (_unloaded) return null;
                 //Debug.Log(buffer.uri + " loaded");
                 buffer.OpenStorage(_storage);
@@ -103,6 +119,39 @@ namespace UMa.GLTF
                 _storage.Dispose();
                 _storage = null;
             }
+        }
+        private Shader _defaultShader;
+        private Shader defaultShader
+        {
+            get
+            {
+                if (_defaultShader == null) _defaultShader = Shader.Find(defaultShaderName);
+                return _defaultShader;
+            }
+        }
+        private Shader _uniUnlitShader;
+        private Shader uniUnlitShader
+        {
+            get
+            {
+                if (_uniUnlitShader == null) _uniUnlitShader = Shader.Find("UniGLTF/UniUnlit");
+                return _uniUnlitShader;
+            }
+        }
+        Shader IShaderStore.GetShader(GLTFMaterial material)
+        {
+            if (material == null)
+            {
+                return defaultShader;
+            }
+
+            if (material.extensions != null && material.extensions.KHR_materials_unlit != null)
+            {
+                return uniUnlitShader;
+            }
+
+            // standard
+            return defaultShader;
         }
     }
 }

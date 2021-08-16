@@ -235,13 +235,13 @@ namespace UMa.GLTF
             {
                 url = null;
                 textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", imageIndex);
-                return storage.Get(image.uri);
+                return storage.GetBinary(image.uri);
             }
             else
             {
                 url = image.uri;
                 textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                return storage.Get(image.uri);
+                return storage.GetBinary(image.uri);
             }
         }
 
