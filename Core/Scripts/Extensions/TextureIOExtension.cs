@@ -117,25 +117,16 @@ namespace UMa.GLTF
             public string mime;
         }
 
-        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType, int mimeType = 0,int quality = 75,int size=0)
+        public static BytesWithMime GetBytesWithMime(this Texture texture, GLTFTextureType textureType, int mimeType = 0, int quality = 75, int width = 0, int height = 0)
         {
-            var tex = texture.CopyTexture(textureType.GetColorSpace(), null);
-            if(size>1){
-                    tex.Resize(size,size);
-                    tex.Apply();
-            }
-            if (mimeType == 0)
-            {
-                return new BytesWithMime
-                {
-                    bytes = tex.EncodeToPNG(),
-                    mime = "image/png"
-                };
-            }
+            var tex = texture.CopyTexture(textureType.GetColorSpace(), null, width, height);
+            var bytes = mimeType == 0 ? tex.EncodeToPNG() : tex.EncodeToJPG(quality);
+            if (Application.isEditor) GameObject.DestroyImmediate(tex);
+            else GameObject.Destroy(tex);
             return new BytesWithMime
             {
-                bytes = tex.EncodeToJPG(quality),
-                mime = "image/jpeg"
+                bytes = bytes,
+                mime = mimeType == 0 ? "image/png" : "image/jpeg"
             };
             // #if UNITY_EDITOR
             //             var path = UnityPath.FromAsset(texture);
@@ -153,7 +144,7 @@ namespace UMa.GLTF
             // #endif
         }
 
-        public static int ExportTexture(this GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType, int mimeType=0)
+        public static int ExportTexture(this GLTFRoot gltf, int bufferIndex, Texture texture, GLTFTextureType textureType, int mimeType = 0)
         {
             //var bytesWithMime = GetBytesWithMime(texture, textureType); ;
 
@@ -186,20 +177,16 @@ namespace UMa.GLTF
 
             return imageIndex;
         }
-        public static Texture2D CopyTexture(this Texture src, RenderTextureReadWrite colorSpace, Material material)
+        public static Texture2D CopyTexture(this Texture src, RenderTextureReadWrite colorSpace, Material material = null, int width = 0, int height = 0)
         {
-            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
+            if (width < 2) width = src.width;
+            if (height < 2) height = src.height;
+            var renderTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, colorSpace);
 
             using (var scope = new ColorSpaceScope(colorSpace))
             {
-                if (material != null)
-                {
-                    Graphics.Blit(src, renderTexture, material);
-                }
-                else
-                {
-                    Graphics.Blit(src, renderTexture);
-                }
+                if (material != null) Graphics.Blit(src, renderTexture, material);
+                else Graphics.Blit(src, renderTexture);
             }
             var dst = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
             dst.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
@@ -207,14 +194,9 @@ namespace UMa.GLTF
             dst.Apply();
 
             RenderTexture.active = null;
-            if (Application.isEditor)
-            {
-                GameObject.DestroyImmediate(renderTexture);
-            }
-            else
-            {
-                GameObject.Destroy(renderTexture);
-            }
+            if (Application.isEditor) GameObject.DestroyImmediate(renderTexture);
+            else GameObject.Destroy(renderTexture);
+
             return dst;
         }
         struct ColorSpaceScope : IDisposable
